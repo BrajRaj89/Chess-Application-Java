@@ -1,0 +1,1 @@
+java -classpath ..\nframework\server\build\libs\server.jar;..\nframework\common\build\libs\common.jar;..\ChessServer\build\libs\ChessServer.jar;..\ChessCommon\build\libs\ChessCommon.jar;..\utils\gson.jar; com.chess.server.Main

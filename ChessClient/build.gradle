@@ -1,0 +1,5 @@
+apply plugin:'java'
+dependencies
+{
+implementation files('../nframework/client/build/libs/client.jar','../nframework/common/build/libs/common.jar','../ChessCommon/build/libs/ChessCommon.jar','../utils/gson.jar');
+}

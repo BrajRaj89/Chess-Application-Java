@@ -1,0 +1,567 @@
+package com.thinking.machines.chess.client;
+import com.thinking.machines.nframework.client.*;
+import com.thinking.machines.chess.common.*;
+import com.thinking.machines.chess.board.*;
+import com.google.gson.*;
+import com.google.gson.reflect.*; 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.table.*;
+import javax.swing.border.*;
+public class ChessUI extends JFrame
+{
+private String username;
+private AvailableMembersListModel availableMembersListModel;
+private JTable availableMembersList;
+private JScrollPane availableMembersListScrollPane;
+private InvitationTableModel invitationTableModel;
+private JTable invitationMessagesList;
+private JScrollPane invitationMessagesListScrollPane;
+private javax.swing.Timer timer,t1,t2;
+private Container container;
+private NFrameworkClient client;
+private JPanel panel1;
+private JPanel panel2;
+private JPanel panel3;
+public ChessUI(String username)
+{
+super("Member :"+username);
+this.client = new NFrameworkClient();
+this.username  = username;
+initComponents();
+setApperance();
+addListeners();
+Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+int w =700;
+int h = 500;
+setSize(w,h);
+setLocation(d.width/2-w/2,d.height/2-h/2);
+}
+private void initComponents()
+{
+panel1 = new JPanel();
+panel1.setLayout(new BorderLayout());
+Font headFont = new Font("Californian FB",Font.BOLD,16);
+JLabel availableLabel = new JLabel("Members");
+availableLabel.setFont(headFont);
+panel1.add(availableLabel,BorderLayout.NORTH);
+availableMembersListModel = new AvailableMembersListModel();
+this.availableMembersList = new JTable(availableMembersListModel);
+this.availableMembersList.getColumn(" ").setCellRenderer(new AvailableMembersListButtonRenderer());
+this.availableMembersList.getColumn(" ").setCellEditor(new AvailableMembersListButtonCellEditor());
+this.availableMembersListScrollPane = new JScrollPane(this.availableMembersList,ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+panel2 = new JPanel();
+panel2.setLayout(new BorderLayout());
+JLabel invitationLabel  = new JLabel("Invitation Messages");
+invitationLabel.setFont(headFont);
+panel2.add(invitationLabel,BorderLayout.NORTH);
+invitationTableModel = new InvitationTableModel();
+invitationMessagesList = new JTable(invitationTableModel);
+invitationMessagesList.setRowHeight(20);
+invitationMessagesList.getColumn("A").setPreferredWidth(90);
+invitationMessagesList.getColumn("B").setPreferredWidth(90);
+invitationMessagesList.getColumn("A").setCellRenderer(new DualButtonRenderer());
+invitationMessagesList.getColumn("A").setCellEditor(new DualButtonEditor());
+invitationMessagesList.getColumn("B").setCellRenderer(new DualButtonRenderer());
+invitationMessagesList.getColumn("B").setCellEditor(new DualButtonEditor());
+this.invitationMessagesListScrollPane = new JScrollPane(this.invitationMessagesList,ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+availableMembersListScrollPane.setPreferredSize(new Dimension(250,200));
+invitationMessagesListScrollPane.setPreferredSize(new Dimension(300,200));
+// availableMembersListScrollPane.getColumnHeader().setVisible(false);
+// invitationMessagesListScrollPane.getColumnHeader().setVisible(false);
+panel1.add(availableMembersListScrollPane);
+panel2.add(invitationMessagesListScrollPane);
+panel3 = new JPanel();
+JLabel gameLabel = new JLabel("Welcome to chess Play");
+gameLabel.setFont(new Font("Monospaced",Font.BOLD,16));
+panel3.setPreferredSize(new Dimension(670,110));
+Border border = new LineBorder(new Color(0, 86, 109), 1, true);
+panel3.setBorder(border);
+JButton leftBtn = new JButton("Leave game");
+leftBtn.setFont(new Font("Serif",Font.BOLD,15));
+panel3.add(gameLabel);
+panel3.add(leftBtn);
+container = getContentPane();
+container.setLayout(new BorderLayout());
+}
+private void setApperance()
+{
+//nothing right now
+}
+private void addListeners()
+{
+t1 = new javax.swing.Timer(2000,new ActionListener(){
+public void actionPerformed(ActionEvent ae)
+{
+try
+{
+Gson gson = new Gson();
+Object result= client.execute("/TMChessServer/getMessages",username);
+String resultJson = gson.toJson(result,Object.class);
+java.lang.reflect.Type listType = new TypeToken<java.util.List<Message>>() {}.getType();
+java.util.List<Message> messages = gson.fromJson(resultJson, listType);
+if(messages!=null)
+{
+for (Message message : messages) 
+{
+if(message.type==MESSAGE_TYPE.CHALLENGE)
+{
+System.out.println("invitation " + message.fromUsername + "-->" + message.toUsername);
+invitationTableModel.addMessage(message,()->{
+try 
+{
+ client.execute("/TMChessServer/removeMessage",username,"Challenge");
+}catch (Exception ex) 
+{
+System.out.println("Exception occured "+ex.getMessage());
+}
+System.out.println("Auto-removed: " + message.fromUsername);
+});
+}else if(message.type==MESSAGE_TYPE.CHALLENGE_ACCEPTED)
+{
+startUI(message.fromUsername);
+availableMembersListModel.refreshMembersList();
+try 
+{
+client.execute("/TMChessServer/removeMessage",username,"Accepted");
+//method to share chessboard to the user 
+//notify the user the game is about to start
+}catch (Exception ex) 
+{
+//do nothing
+}
+}else if(message.type==MESSAGE_TYPE.CHALLENGE_REJECTED)
+{
+JLabel reply= new JLabel("Your invitation is rejected by user "+message.fromUsername);
+reply.setFont(new Font("Century",Font.BOLD,15));
+reply.setBackground(Color.white);
+reply.setForeground(new Color(48,55,147)); 
+JOptionPane.showMessageDialog(null,reply);
+availableMembersListModel.refreshMembersList();
+try 
+{
+ client.execute("/TMChessServer/removeMessage",username,"Rejected");
+}catch (Exception ex) 
+{
+//do nothing
+}
+}
+}//for loop ends 
+}// if ends
+}catch(Exception t)
+{
+System.out.println("Exception occured "+t.getMessage());
+}
+}
+
+});
+t1.start();
+timer = new javax.swing.Timer(3000,new ActionListener(){
+public void actionPerformed(ActionEvent ae)
+{
+timer.stop();
+try
+{
+java.util.List<String> members =(java.util.List<String>)client.execute("/TMChessServer/getMembers",username);
+ChessUI.this.availableMembersListModel.setMembers(members);
+timer.start();
+}catch(Throwable t)
+{
+JOptionPane.showMessageDialog(ChessUI.this,t.toString());
+}
+} 
+});
+
+addWindowListener(new WindowAdapter(){
+public void windowClosing(WindowEvent e)
+{
+try
+{
+client.execute("/TMChessServer/logout",username);
+}catch(Throwable t)
+{
+JOptionPane.showMessageDialog(ChessUI.this,t.toString());
+}
+System.exit(0);
+}
+});
+// now all is setup,let us starts the timer
+timer.start();
+}
+public void showHomeUI()
+{
+hideUI();
+panel1.setBackground(Color.white);
+panel2.setBackground(Color.white);
+panel3.setBackground(Color.white);
+container.add(panel1,BorderLayout.EAST);
+container.add(panel2,BorderLayout.WEST);
+container.add(panel3,BorderLayout.SOUTH);
+container.revalidate();
+container.repaint();
+setVisible(true);
+}
+public void hideUI()
+{
+container.removeAll();
+container.revalidate();
+container.repaint();
+}
+public void showChessUI()
+{
+//done done
+}
+public void showResultUI()
+{
+//done done
+}
+
+
+public void startUI(String username)
+{
+hideUI();
+JPanel startPanel = new JPanel();
+JPanel btnPanel = new JPanel();
+JButton cancelbtn = new JButton("Cancel");
+JButton startbtn = new JButton("Start");
+JTextArea messageArea = new JTextArea();
+messageArea.setText("Your invitation is accepted by the user "+username+"\nLet's Play Game!\nEnjoy the challenge!");
+messageArea.setLineWrap(true);
+messageArea.setWrapStyleWord(true);
+messageArea.setEditable(false);
+messageArea.setPreferredSize(new Dimension(480,95)); 
+messageArea.setBorder(null);
+Font mfont = new Font("Monospaced",Font.BOLD,16);
+messageArea.setFont(mfont);
+messageArea.setForeground(new Color(0, 86, 109));
+Font btnFont = new Font("Serif",Font.BOLD,15);
+startbtn.setFont(btnFont);
+cancelbtn.setFont(btnFont);
+btnPanel.add(startbtn);
+btnPanel.add(cancelbtn);
+startPanel.add(messageArea);
+startPanel.add(btnPanel);
+startPanel.setBounds(100,150,482,150);
+startPanel.setBackground(Color.white);
+Border border = new LineBorder(new Color(0, 86, 109), 1, true);
+startPanel.setBorder(border);
+container.setLayout(null);
+container.add(startPanel);
+setResizable(false);
+startbtn.addActionListener(new ActionListener(){
+public void actionPerformed(ActionEvent ae)
+{
+messageArea.setText("Your game is about to start");
+//send message to add chessboard to user 
+showChessUI();
+}
+});
+cancelbtn.addActionListener(new ActionListener()
+{
+public void actionPerformed(ActionEvent ae)
+{
+showHomeUI();
+}
+});
+}
+
+private void sendInvitation(String toUsername)
+{
+try
+{
+client.execute("/TMChessServer/inviteUser",username,toUsername);
+JLabel reply= new JLabel("Invitation for game send to "+toUsername);
+reply.setFont(new Font("Century",Font.BOLD,15));
+reply.setBackground(Color.white);
+reply.setForeground(new Color(79,43,112));
+JOptionPane.showMessageDialog(this,reply);
+}catch(Throwable t)
+{
+System.out.println("some error");
+}
+}
+private void sendBackMessage(String fromUsername,String toUsername,String type)
+{
+System.out.println("sendBack message got called");
+try
+{
+client.execute("/TMChessServer/setMessage",fromUsername,toUsername,type);
+}catch(Exception exception)
+{
+System.out.println("error in sending message "+exception.getMessage());
+}
+}
+public void startGame(String username1,String username2)
+{
+// write the necessary code to start the game
+}
+//inner classes starts here 
+class AvailableMembersListModel extends AbstractTableModel
+{
+private java.util.List<String> members;
+private String title[] = {"Members"," "};
+private java.util.List<JButton> inviteButtons;
+private boolean awaitingInvitationReply;
+AvailableMembersListModel()
+{
+awaitingInvitationReply = false;
+inviteButtons = new LinkedList<>();
+members = new LinkedList<>();
+}
+public int getRowCount()
+{
+return this.members.size();
+}
+public int getColumnCount()
+{
+return this.title.length;
+}
+public String getColumnName(int columnIndex)
+{
+return title[columnIndex];
+}
+public Object getValueAt(int row,int column)
+{
+if(column==0) return this.members.get(row);
+return this.inviteButtons.get(row);
+}
+public boolean isCellEditable(int r,int c)
+{
+if(c==1) return true;
+return false;
+}
+public Class getColumnClass(int c)
+{
+if(c==0) return String.class;
+return JButton.class;
+}
+public void setMembers(java.util.List<String> members)
+{
+if(awaitingInvitationReply) return;
+this.members = members;
+this.inviteButtons.clear();
+for(int i=0; i<this.members.size(); i++) this.inviteButtons.add(new JButton("Invite"));
+fireTableDataChanged();
+}
+public void setValueAt(Object data,int row,int col)
+{
+if(col==1)
+{
+JButton button = inviteButtons.get(row);
+String text = (String)data;
+button.setText(text);
+button.setEnabled(false);
+if(text.equalsIgnoreCase("Invited"))
+{
+awaitingInvitationReply = true;
+for(JButton inviteButton:inviteButtons) inviteButton.setEnabled(false);
+ChessUI.this.sendInvitation(this.members.get(row));
+this.fireTableDataChanged();
+}
+else if(text.equalsIgnoreCase("Invite"))
+{
+awaitingInvitationReply = false;
+for(JButton inviteButton:inviteButtons) inviteButton.setEnabled(true);
+this.fireTableDataChanged();
+}
+}
+}
+public void refreshMembersList()
+{
+this.members.clear();
+this.fireTableDataChanged();
+this.awaitingInvitationReply= false;
+}
+}
+class AvailableMembersListButtonRenderer implements TableCellRenderer
+{
+public Component getTableCellRendererComponent(JTable table,Object value,boolean a,boolean b,int r,int c)
+{
+return (JButton)value;
+}
+}
+class AvailableMembersListButtonCellEditor extends DefaultCellEditor
+{
+private ActionListener actionListener;
+private JButton button;
+private boolean isClicked;
+private int row,col;
+AvailableMembersListButtonCellEditor()
+{
+super(new JCheckBox());
+//button.setOpaque(true);
+this.actionListener = new ActionListener()
+{
+public void actionPerformed(ActionEvent ae)
+{
+fireEditingStopped();
+}
+}; 
+}
+public Component getTableCellEditorComponent(JTable table,Object value,boolean a,int row,int column)
+{
+this.row = row;
+this.col = column;
+JButton button = (JButton)availableMembersListModel.getValueAt(this.row,this.col);
+button.removeActionListener(this.actionListener);
+button.addActionListener(this.actionListener);
+button.setForeground(Color.black);
+button.setBackground(UIManager.getColor("Button.background"));
+button.setOpaque(true);
+isClicked = true;
+return button;
+}
+public Object getCellEditorValue()
+{
+//right now do nothing later on something to send required or call a callback 
+System.out.println("Button at cell :"+this.row+","+this.col+" clicked");
+return "Invited";
+}
+public boolean stopCellEditing()
+{
+isClicked = false;
+return super.stopCellEditing();
+}
+public void fireEditingStopped()
+{
+//do whatever is required
+super.fireEditingStopped();
+}
+}
+
+// inner class
+
+class InvitationTableModel extends AbstractTableModel
+{
+private java.util.List<Message> messages = new ArrayList<>();
+private java.util.List<JButton> acceptButtons = new ArrayList<>();
+private java.util.List<JButton> declineButtons = new ArrayList<>();
+private java.util.Map<Message,javax.swing.Timer> expiryTimer = new HashMap<>();
+private String columns[] = {"From","A","B"};
+public int getRowCount()
+{
+return messages.size();
+}
+public int getColumnCount()
+{
+return columns.length;
+}
+public String getColumnName(int col)
+{
+return columns[col];
+}
+public Object getValueAt(int row,int col)
+{
+if(col==0) return messages.get(row).fromUsername;
+if(col==1) return acceptButtons.get(row);
+return declineButtons.get(row);
+}
+public Class getColumnClass(int col)
+{
+if(col==0) return String.class;
+return JButton.class;
+}
+public boolean isCellEditable(int row,int col)
+{
+return col==1||col==2;
+}
+public Message getMessageAt(int row)
+{
+return messages.get(row);
+}
+public void setValueAt(Object value,int row,int col)
+{
+System.out.println("setValueAt called at row = "+row+",col = "+col+",value = "+value);
+// This method is not used in current button workflow
+}
+public void addMessage(Message msg,Runnable onExpire)
+{
+if(!messages.contains(msg))
+{
+messages.add(msg);
+JButton btn1 = new JButton("Accept");
+JButton btn2 = new JButton("Decline");
+acceptButtons.add(btn1);
+declineButtons.add(btn2);
+fireTableRowsInserted(messages.size() - 1, messages.size() - 1);
+t2 = new javax.swing.Timer(50000,new ActionListener(){
+public void actionPerformed(ActionEvent ae)
+{
+removeMessage(msg);
+}
+});
+onExpire.run();
+t2.setRepeats(false);
+t2.start();
+expiryTimer.put(msg,t2);
+}
+}
+public void removeMessage(Message msg)
+{
+int index = messages.indexOf(msg);
+messages.remove(index);
+acceptButtons.remove(index);
+declineButtons.remove(index);
+javax.swing.Timer t = expiryTimer.remove(msg);
+if(t!=null) t.stop();
+fireTableRowsDeleted(index,index);
+}
+
+}// inner class ends 
+
+class DualButtonRenderer implements TableCellRenderer 
+{
+public Component getTableCellRendererComponent(JTable table,Object value,boolean a,boolean b,int r,int c)
+{
+return (JButton)value;
+}
+}
+class DualButtonEditor extends DefaultCellEditor
+{
+private int row;
+private int col;
+private JTable table;
+private JButton button;
+DualButtonEditor()
+{
+super(new JCheckBox());
+}
+public Component getTableCellEditorComponent(JTable table,Object value,boolean a,int row,int col)
+{
+this.row = row;
+this.col = col;
+this.button = (JButton)value;
+for(ActionListener al:button.getActionListeners())
+{
+button.removeActionListener(al);
+}
+// now adding action listener
+button.addActionListener(e->{
+InvitationTableModel model = (InvitationTableModel)table.getModel();
+String toUsername = (String)model.getValueAt(row,0);
+String type =null;
+if(col==1) type="Accepted";
+if(col==2) type="Rejected";
+sendBackMessage(username,toUsername,type);
+model.removeMessage(model.getMessageAt(row));
+fireEditingStopped();
+});
+return button;
+}
+public Object getCellEditorValue()
+{
+return button.getText();
+}
+public boolean stopCellEditing()
+{
+return super.stopCellEditing();
+}
+public void fireEditingStopped()
+{
+super.fireEditingStopped();
+}
+}// inner class ends 
+
+}// outer class ends                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
