@@ -6,7 +6,7 @@ public class Main
 public static void main(String args[])
 {
 NFrameworkServer nfs = new NFrameworkServer();
-nfs.registerClass(TMChessServer.class);
+nfs.registerClass(ChessServer.class);
 nfs.start();
 }
 }

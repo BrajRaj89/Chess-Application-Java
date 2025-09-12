@@ -23,7 +23,7 @@ private JScrollPane availableUsersListScrollPane;
 private InvitationTableModel invitationTableModel;
 private JTable invitationMessagesList;
 private JScrollPane invitationMessagesListScrollPane;
-private javax.swing.Timer timer,t1,t2,t3;
+private javax.swing.Timer timer,t1,t2;
 private Container container;
 private NFrameworkClient client;
 private JPanel panel1;
@@ -33,6 +33,7 @@ private JLabel message;
 private int w,h,cw,ch;
 private Font messageFont;
 private ChessBoard chessBoard;
+private Gson gson;
 public ChessUI()
 {
 this.client = new NFrameworkClient();
@@ -48,6 +49,7 @@ setLocation(cw,ch);
 }
 private void initComponents()
 {
+gson = new Gson();
 messageFont = new Font("monospaced",Font.BOLD,16);
 panel1 = new JPanel();
 panel1.setLayout(new BorderLayout());
@@ -117,8 +119,7 @@ public void actionPerformed(ActionEvent ae)
 {
 try
 {
-Gson gson = new Gson();
-Object result= client.execute("/TMChessServer/getMessages",username);
+Object result= client.execute("/ChessServer/getMessages",username);
 String resultJson = gson.toJson(result,Object.class);
 java.lang.reflect.Type listType = new TypeToken<java.util.List<Message>>() {}.getType();
 java.util.List<Message> messages = gson.fromJson(resultJson, listType);
@@ -131,7 +132,7 @@ if(message.type==MESSAGE_TYPE.CHALLENGE)
 invitationTableModel.addMessage(message,()->{
 try 
 {
-client.execute("/TMChessServer/removeMessage",username,"Challenge");
+client.execute("/ChessServer/removeMessage",username,"Challenge");
 }catch (Exception ex) 
 {
 System.out.println("Exception occured "+ex.getMessage());
@@ -143,7 +144,7 @@ startUI(message.fromUsername);
 availableUsersListModel.refreshUsersList();
 try 
 {
-client.execute("/TMChessServer/removeMessage",username,"Accepted");
+client.execute("/ChessServer/removeMessage",username,"Accepted");
 }catch(Exception ex) 
 {
 //do nothing
@@ -158,11 +159,33 @@ JOptionPane.showMessageDialog(null,reply);
 availableUsersListModel.refreshUsersList();
 try 
 {
-client.execute("/TMChessServer/removeMessage",username,"Rejected");
+client.execute("/ChessServer/removeMessage",username,"Rejected");
 }catch (Exception ex) 
 {
 //do nothing
 }
+}else if(message.type==MESSAGE_TYPE.START_GAME) 
+{
+try 
+{
+client.execute("/ChessServer/removeMessage",username,"StartGame");
+}catch (Exception ex) 
+{
+//do nothing
+}
+hideUI();
+String board[][]=null;
+Object boardObj = client.execute("/ChessServer/getBoard",username);
+String boardJson = gson.toJson(boardObj,Object.class);
+java.lang.reflect.Type TypeOfList = new TypeToken<String [][]>() {}.getType();
+board = gson.fromJson(boardJson, TypeOfList);
+chessBoard = new ChessBoard(message.fromUsername,username,board);
+container = getContentPane();
+Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+setSize(screenSize.width,screenSize.height);
+setLocation(0,0);
+container.add(chessBoard.boardPanel);
+container.add(chessBoard.sidePanel);
 }
 }//for loop ends 
 }// if ends
@@ -180,7 +203,7 @@ timer.stop();
 try
 {
 @SuppressWarnings("unchecked")
-java.util.List<String> users =(java.util.List<String>)client.execute("/TMChessServer/getMembers",username);
+java.util.List<String> users =(java.util.List<String>)client.execute("/ChessServer/getMembers",username);
 ChessUI.this.availableUsersListModel.setUsers(users);
 timer.start();
 }catch(Throwable t)
@@ -195,7 +218,7 @@ public void windowClosing(WindowEvent e)
 {
 try
 {
-client.execute("/TMChessServer/logout",username);
+client.execute("/ChessServer/logout",username);
 }catch(Throwable t)
 {
 JOptionPane.showMessageDialog(ChessUI.this,t.toString());
@@ -205,32 +228,6 @@ System.exit(0);
 });
 // now all is setup,let us starts the timer
 timer.start();
-
-t3 = new Timer(1000,new ActionListener() {
-public void actionPerformed(ActionEvent ae)
-{
-System.out.println("got called");
-try
-{
-String board [][] = (String [][])client.execute("/TMChessServer/getBoard",username);
-if(board!=null)
-{
-String opponent  = (String)client.execute("/TMChessServer/getOpponentPlayer",username);
-hideUI();
-chessBoard = new ChessBoard(username,opponent);
-Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-setSize(screenSize.width,screenSize.height);
-setLocation(0,0);
-container.add(chessBoard.boardPanel);
-container.add(chessBoard.sidePanel);
-}
-t3.stop();
-}catch(Exception e)
-{
-e.printStackTrace();
-}
-}
-});
 }
 public void showHomeUI()
 {
@@ -380,7 +377,7 @@ return;
 boolean authentic=false;
 try
 {
-authentic = (boolean)client.execute("/TMChessServer/authenticateMember",usernameVal,passwordVal);
+authentic = (boolean)client.execute("/ChessServer/authenticateMember",usernameVal,passwordVal);
 addListeners();
 if(authentic)
 {
@@ -463,7 +460,7 @@ private void sendInvitation(String toUsername)
 {
 try
 {
-client.execute("/TMChessServer/inviteUser",username,toUsername);
+client.execute("/ChessServer/inviteUser",username,toUsername);
 JLabel reply= new JLabel("Invitation for game send to "+toUsername);
 reply.setFont(new Font("Century",Font.BOLD,15));
 reply.setBackground(Color.white);
@@ -478,7 +475,7 @@ private void sendBackMessage(String fromUsername,String toUsername,String type)
 {
 try
 {
-client.execute("/TMChessServer/setMessage",fromUsername,toUsername,type);
+client.execute("/ChessServer/setMessage",fromUsername,toUsername,type);
 }catch(Exception exception)
 {
 System.out.println("error in sending message "+exception.getMessage());
@@ -488,19 +485,25 @@ public void startGame(String username1,String username2)
 {
 try
 {
-client.execute("/TMChessServer/shareBoard",username1,username2);
-}catch(Throwable t)
-{
-//do nothing
-}
+client.execute("/ChessServer/shareBoard",username1,username2);
 hideUI();
-chessBoard = new ChessBoard(username1, username2);
+String board[][]=null;
+Object boardObj = client.execute("/ChessServer/getBoard",username);
+String resultJson = gson.toJson(boardObj,Object.class);
+java.lang.reflect.Type listType = new TypeToken<String [][]>() {}.getType();
+board = gson.fromJson(resultJson, listType);
+chessBoard = new ChessBoard(username1, username2,board);
 container = getContentPane();
 Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 setSize(screenSize.width,screenSize.height);
 setLocation(0,0);
 container.add(chessBoard.boardPanel);
 container.add(chessBoard.sidePanel);
+client.execute("/ChessServer/setMessage",username1,username2,"StartGame");
+}catch(Throwable t)
+{
+System.out.println("getting error "+t.getMessage());
+}
 }
 //inner classes starts here 
 class AvailableUsersListModel extends AbstractTableModel
@@ -781,8 +784,9 @@ private JButton pieceInAttack;
 private Color redColor;
 private ArrayList<JButton> redBtns;
 
-public ChessBoard(String user1,String user2)
+public ChessBoard(String user1,String user2,String [][]board)
 {
+this.board =board;
 redBtns = new ArrayList<>();
 redColor = new Color(255,0,0);
 pieceInAttack=null;

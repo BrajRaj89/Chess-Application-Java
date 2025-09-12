@@ -4,8 +4,8 @@ import com.chess.common.*;
 import com.nframework.server.annotations.*;
 import java.util.*;
 
-@Path("/TMChessServer")
-public class TMChessServer
+@Path("/ChessServer")
+public class ChessServer
 {
 static private Map<String,Member> members;
 static private Set<String> loggedInMembers;
@@ -16,7 +16,7 @@ static
 {
 populateDataStructures();
 }
-public TMChessServer()
+public ChessServer()
 {
 }
 static private void populateDataStructures()
@@ -119,6 +119,7 @@ MESSAGE_TYPE type= null;
 if(tp.equals("Challenge")) type = MESSAGE_TYPE.CHALLENGE;
 if(tp.equals("Accepted")) type = MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type = MESSAGE_TYPE.CHALLENGE_REJECTED;
+if(tp.equals("StartGame")) type = MESSAGE_TYPE.START_GAME;
 System.out.println(type);
 System.out.println(username);
 try
@@ -150,6 +151,7 @@ System.out.println("set message got called");
 MESSAGE_TYPE type =null;
 if(tp.equals("Accepted")) type=MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type=MESSAGE_TYPE.CHALLENGE_REJECTED;
+if(tp.equals("StartGame")) type=MESSAGE_TYPE.START_GAME;
 Message msg = new Message();
 msg.fromUsername= fromUsername;
 msg.toUsername = toUsername;
@@ -174,12 +176,12 @@ public String getGameId(String username)
 {
 return "abc";
 }
-@Path("canIplay")
+@Path("/canIplay")
 public boolean canIplay(String gameId,String username)
 {
 return false;
 }
-@Path("submitMove")
+@Path("/submitMove")
 public void submitMove(String byUsername,byte piece,int fromX,int fromY,int toX,int toY)
 {
 
@@ -192,6 +194,7 @@ return null;
 @Path("/shareBoard")
 public void shareBoard(String user1,String user2)
 {
+System.out.println("shareBoard got called");
 Game game = new Game();
 game.user1 = user1;
 game.user2 = user2;
@@ -202,21 +205,19 @@ board[6] = new String[]{ "wp.png", "wp.png", "wp.png", "wp.png", "wp.png", "wp.p
 board[7] = new String[]{ "wr.png", "wkt.png", "wb.png", "wq.png", "wk.png", "wb.png", "wkt.png", "wr.png" };
 game.board = board;
 games.put(user2,game);
+games.put(user1, game);
+System.out.println("shareBoard completes here");
 }
-@Path("getBoard")
+@Path("/getBoard")
 public String[][] getBoard(String username)
 {
+System.out.println("getBoard got called from "+username);
 Game game = games.get(username);
 if(game==null)
 {
 return null;
 }
+System.out.println("getBoard completes here");
 return game.board;
-}
-@Path("getOpponentPlayer")
-public String getOpponentPlayer(String username)
-{
-Game game = games.get(username);
-return game.user2;
 }
 }
