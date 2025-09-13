@@ -87,7 +87,7 @@ gameLabel.setFont(new Font("Monospaced",Font.BOLD,16));
 panel3.setPreferredSize(new Dimension(670,110));
 Border border = new LineBorder(new Color(0, 86, 109), 1, true);
 panel3.setBorder(border);
-JButton leaveBtn = new JButton("Leave game");
+JButton leaveBtn = new JButton("Leave game ➜");
 leaveBtn.addActionListener(_->{
 message = new JLabel("Are you sure? Exit Game");
 message.setFont(messageFont);
@@ -104,11 +104,9 @@ panel3.add(gameLabel);
 panel3.add(Box.createHorizontalGlue());
 panel3.add(leaveBtn);
 container = getContentPane();
-container.setLayout(new BorderLayout());
 }
 private void setApperance()
 {
-//nothing right now
 }
 private void addListeners()
 {
@@ -149,11 +147,11 @@ client.execute("/ChessServer/removeMessage",username,"Accepted");
 }
 }else if(message.type==MESSAGE_TYPE.CHALLENGE_REJECTED)
 {
-JLabel reply= new JLabel("Your invitation is rejected by user "+message.fromUsername);
-reply.setFont(new Font("Century",Font.PLAIN,14));
-reply.setBackground(Color.white);
-reply.setForeground(new Color(0,51,102)); 
-JOptionPane.showMessageDialog(null,reply);
+JLabel messagLabel = new JLabel("Your invitation is rejected by user "+message.fromUsername);
+messagLabel.setFont(new Font("Century",Font.PLAIN,14));
+messagLabel.setBackground(Color.white);
+messagLabel.setForeground(new Color(0,51,102)); 
+JOptionPane.showMessageDialog(null,messagLabel);
 availableUsersListModel.refreshUsersList();
 try 
 {
@@ -171,19 +169,17 @@ client.execute("/ChessServer/removeMessage",username,"StartGame");
 {
 //do nothing
 }
-hideUI();
-String board[][]=null;
-Object boardObj = client.execute("/ChessServer/getBoard",username);
-String boardJson = gson.toJson(boardObj,Object.class);
-java.lang.reflect.Type TypeOfList = new TypeToken<String [][]>() {}.getType();
-board = gson.fromJson(boardJson, TypeOfList);
-chessBoard = new ChessBoard(username,message.fromUsername,board);
-container = getContentPane();
-Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-setSize(screenSize.width,screenSize.height-41);
-setLocation(0,0);
-container.add(chessBoard.boardPanel);
-container.add(chessBoard.sidePanel);
+startGame(username,message.fromUsername);
+}else if(message.type==MESSAGE_TYPE.END_GAME)
+{
+try
+{
+client.execute("/ChessServer/removeMessage",username,"EndGame");
+}catch(Exception e)
+{
+//do nothing
+}
+showResultUI(username,message.fromUsername,"Won");
 }
 }//for loop ends 
 }// if ends
@@ -210,12 +206,12 @@ JOptionPane.showMessageDialog(ChessUI.this,t.toString());
 }
 } 
 });
-
 addWindowListener(new WindowAdapter(){
 public void windowClosing(WindowEvent e)
 {
 try
 {
+System.out.print("logout");
 client.execute("/ChessServer/logout",username);
 }catch(Throwable t)
 {
@@ -231,6 +227,7 @@ public void showHomeUI()
 {
 setTitle(this.username);
 hideUI();
+container.setLayout(new BorderLayout());
 setSize(w,h);
 setLocation(cw,ch);
 panel1.setBackground(Color.white);
@@ -248,8 +245,9 @@ public void hideUI()
 container.removeAll();
 container.revalidate();
 container.repaint();
+container.setLayout(null);
 }
-public void showResultUI()
+public void showResultUI(String winner,String losser,String rst)
 {
 hideUI();
 JLabel heading = new JLabel("Result");
@@ -282,7 +280,7 @@ JTextArea message = new JTextArea();
 message.setFont(fieldFont);
 message.setBounds(120,320,470,40);
 message.setEditable(false);
-message.setText("This is fore inner user");
+message.setText("You have "+rst+" the match");
 JButton RematchBtn = new JButton("Rematch");
 JButton OkBtn = new JButton("Ok");
 RematchBtn.setFont(btnFont);
@@ -291,16 +289,15 @@ RematchBtn.setBounds(210,390,130,40);
 OkBtn.setBounds(360,390,130,40);
 whiteStatus.setEditable(false);
 blackStatus.setEditable(false);
-blackStatus.setText("Bobby Loss");
-whiteStatus.setText("Amit Won");
+blackStatus.setText(winner+" Won");
+whiteStatus.setText(losser+" Loss");
 whiteStatus.setBackground(Color.white);
 blackStatus.setBackground(Color.white);
-
 OkBtn.addActionListener(_->{
 showHomeUI();
 });
 RematchBtn.addActionListener(_->{
-
+rematch();
 });
 JPanel resultPanel  = new JPanel();
 resultPanel.setLayout(null);
@@ -313,6 +310,8 @@ resultPanel.add(blackStatus);
 resultPanel.add(message);
 resultPanel.add(RematchBtn);
 resultPanel.add(OkBtn);
+setSize(w,h);
+setLocation(cw,ch);
 container.setLayout(new BorderLayout());
 container.add(resultPanel,BorderLayout.CENTER);
 setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -331,7 +330,7 @@ ImageIcon chessImageIcon = new ImageIcon(getClass().getResource("/icons/chessboa
  Image chessImage = chessImageIcon.getImage();
  Image newImage = chessImage.getScaledInstance(130,130,Image.SCALE_SMOOTH);
  JLabel imageLabel = new JLabel(new ImageIcon(newImage));
- imageLabel.setBounds(40,10,131,131);
+ imageLabel.setBounds(270,10,131,131);
 JTextField usernameField = new JTextField();
 usernameField.setPreferredSize(new Dimension(300,45));
 JTextField passwordField = new JTextField();
@@ -346,12 +345,12 @@ passwordLabel.setFont(labelFont);
 passwordField.setFont(fieldFont);
 passwordLabel.setBounds(130,195,200,180);
 passwordField.setBounds(250,274,300,40);
-JButton loginBtn = new JButton("Login");
+JButton loginBtn = new JButton("Login  🡨");
 JButton createAc = new JButton("New Account");
 loginBtn.setFont(btnFont);
 createAc.setFont(btnFont);
-loginBtn.setBounds(170,350,150,40);
-createAc.setBounds(360,350,150,40);
+loginBtn.setBounds(180,350,150,40);
+createAc.setBounds(370,350,150,40);
 JPanel loginPanel  = new JPanel();
 loginPanel.setLayout(null);
 loginPanel.add(imageLabel);
@@ -442,7 +441,15 @@ setResizable(false);
 startbtn.addActionListener(new ActionListener(){
 public void actionPerformed(ActionEvent ae)
 {
+try
+{
+client.execute("/ChessServer/shareBoard",username,opponent);
 startGame(username,opponent);
+client.execute("/ChessServer/setMessage",username,opponent,"StartGame");
+}catch(Exception e)
+{
+e.printStackTrace();
+}
 }
 });
 cancelbtn.addActionListener(new ActionListener()
@@ -453,17 +460,16 @@ showHomeUI();
 }
 });
 }
-
 private void sendInvitation(String toUsername)
 {
 try
 {
 client.execute("/ChessServer/inviteUser",username,toUsername);
-JLabel reply= new JLabel("Invitation for game send to "+toUsername);
-reply.setFont(new Font("Century",Font.BOLD,15));
-reply.setBackground(Color.white);
-reply.setForeground(new Color(79,43,112));
-JOptionPane.showMessageDialog(this,reply);
+JLabel message = new JLabel("Invitation for game send to "+toUsername);
+message.setFont(new Font("Century",Font.BOLD,15));
+message.setBackground(Color.white);
+message.setForeground(new Color(79,43,112));
+JOptionPane.showMessageDialog(this,message);
 }catch(Throwable t)
 {
 System.out.println("some error");
@@ -481,27 +487,31 @@ System.out.println("error in sending message "+exception.getMessage());
 }
 public void startGame(String username1,String username2)
 {
-try
-{
-client.execute("/ChessServer/shareBoard",username1,username2);
 hideUI();
 String board[][]=null;
-Object boardObj = client.execute("/ChessServer/getBoard",username);
+Object boardObj=null;
+try
+{
+boardObj = client.execute("/ChessServer/getBoard",username);
+}catch(Throwable t)
+{
+System.out.println("getting error "+t.getMessage());
+}
 String resultJson = gson.toJson(boardObj,Object.class);
 java.lang.reflect.Type listType = new TypeToken<String [][]>() {}.getType();
 board = gson.fromJson(resultJson, listType);
 chessBoard = new ChessBoard(username1, username2,board);
-container = getContentPane();
 Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 setSize(screenSize.width,screenSize.height-41);
 setLocation(0,0);
 container.add(chessBoard.boardPanel);
 container.add(chessBoard.sidePanel);
-client.execute("/ChessServer/setMessage",username1,username2,"StartGame");
-}catch(Throwable t)
-{
-System.out.println("getting error "+t.getMessage());
+container.revalidate();
+container.repaint();
 }
+public void rematch()
+{
+
 }
 //inner classes starts here 
 class AvailableUsersListModel extends AbstractTableModel
@@ -794,16 +804,14 @@ iconMap = new HashMap<>();
 setTitle(user1);
 setDefaultCloseOperation(EXIT_ON_CLOSE);
 boardPanel = new JPanel(new GridLayout(8, 8));
-initializeIconMap();
-initializeBoard(boardPanel);
-sidePanel = new JPanel();
 Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 setSize(d.width, d.height);
 Border border = new LineBorder(new Color(0, 86, 109), 1);
 boardPanel.setBorder(border);
-sidePanel.setBorder(border);
 boardPanel.setBounds(2, 2, d.width - 458, d.height - 83);
+sidePanel = new JPanel();
 sidePanel.setBounds(d.width - 457, 2, 440, d.height - 83);
+sidePanel.setBorder(border);
 JButton cancelBtn = new JButton("Exit Game");
 cancelBtn.addActionListener(_->{
 message = new JLabel("Are you sure? Exit Game");
@@ -813,6 +821,13 @@ int selected = JOptionPane.showConfirmDialog(null,message,"Select",JOptionPane.Y
 if(selected==0)
 {
 showHomeUI();
+try
+{
+client.execute("/ChessServer/setMessage",user1,user2,"EndGame");
+}catch(Exception e)
+{
+//do nothing
+}
 }
 });
 JButton submitBtn = new JButton("Submit Move");
@@ -843,6 +858,13 @@ int selected = JOptionPane.showConfirmDialog(null,message,"Select",JOptionPane.Y
 if(selected==0)
 {
 showHomeUI();
+try
+{
+client.execute("/ChessServer/setMessage",user1,user2,"EndGame");
+}catch(Exception e)
+{
+//do nothing
+}
 }
 });
 btnPanel.add(submitBtn);
@@ -896,6 +918,8 @@ sidePanel.add(capturePane);
 sidePanel.add(player1 );
 sidePanel.add(statusPane);
 sidePanel.add(btnPanel);
+initializeIconMap();
+initializeBoard(boardPanel);
 }
 private void initializeIconMap()
 {

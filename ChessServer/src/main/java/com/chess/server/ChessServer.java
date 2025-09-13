@@ -120,6 +120,7 @@ if(tp.equals("Challenge")) type = MESSAGE_TYPE.CHALLENGE;
 if(tp.equals("Accepted")) type = MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type = MESSAGE_TYPE.CHALLENGE_REJECTED;
 if(tp.equals("StartGame")) type = MESSAGE_TYPE.START_GAME;
+if(tp.equals("EndGame")) type = MESSAGE_TYPE.END_GAME;
 System.out.println(type);
 System.out.println(username);
 try
@@ -152,6 +153,7 @@ MESSAGE_TYPE type =null;
 if(tp.equals("Accepted")) type=MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type=MESSAGE_TYPE.CHALLENGE_REJECTED;
 if(tp.equals("StartGame")) type=MESSAGE_TYPE.START_GAME;
+if(tp.equals("EndGame")) type=MESSAGE_TYPE.END_GAME;
 Message msg = new Message();
 msg.fromUsername= fromUsername;
 msg.toUsername = toUsername;
