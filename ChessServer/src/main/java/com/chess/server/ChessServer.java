@@ -188,6 +188,7 @@ public void submitMove(String byUsername,byte piece,int fromX,int fromY,int toX,
 {
 
 }
+@Path("/getMove")
 public Move getOpponentsMove(String username)
 {
 

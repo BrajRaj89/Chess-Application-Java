@@ -5,6 +5,8 @@ import com.chess.board.*;
 import com.google.gson.*;
 import com.google.gson.reflect.*; 
 import javax.swing.*;
+import javax.swing.Timer;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -832,6 +834,21 @@ client.execute("/ChessServer/setMessage",user1,user2,"EndGame");
 });
 JButton submitBtn = new JButton("Submit Move");
 submitBtn.addActionListener(_->{
+try
+{
+System.out.println("Submited move");
+}catch(Exception e)
+{
+//do nothing
+}
+javax.swing.Timer t3 = new Timer(10000,new ActionListener() {
+public void actionPerformed(ActionEvent ae)
+{
+JOptionPane.showMessageDialog(null,"No Response");
+}
+});
+t3.start();
+t3.setRepeats(false);
 message = new JLabel("Move submitted");
 message.setFont(messageFont);
 message.setForeground(new Color(48,55,147));
@@ -1351,12 +1368,6 @@ public void resetBoard()
 boardPanel.removeAll();
 boardPanel.revalidate();
 boardPanel.repaint();
-// call the reinitialize method so that the pieces can be place at starting position
-initializeBoard(boardPanel);
-}
-public void submitMove(String board[][])
-{
-this.board = board;
 initializeBoard(boardPanel);
 }    
 }
