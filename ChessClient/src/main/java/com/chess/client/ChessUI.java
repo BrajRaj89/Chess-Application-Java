@@ -793,7 +793,7 @@ public JPanel sidePanel;
 private JButton pieceInAttack;
 private Color redColor;
 private ArrayList<JButton> redBtns;
-
+public int x1,y1,x2,y2;
 public ChessBoard(String user1,String user2,String [][]board)
 {
 this.board =board;
@@ -836,7 +836,14 @@ JButton submitBtn = new JButton("Submit Move");
 submitBtn.addActionListener(_->{
 try
 {
-System.out.println("Submited move");
+boolean flag = (boolean)client.execute("/ChessClient/submitMove",x1,y1,x2,y2);
+if(flag)
+{
+message = new JLabel("Move submitted");
+message.setFont(messageFont);
+message.setForeground(new Color(48,55,147));
+JOptionPane.showMessageDialog(null,message);
+}
 }catch(Exception e)
 {
 //do nothing
@@ -844,7 +851,27 @@ System.out.println("Submited move");
 javax.swing.Timer t3 = new Timer(10000,new ActionListener() {
 public void actionPerformed(ActionEvent ae)
 {
-JOptionPane.showMessageDialog(null,"No Response");
+try
+{
+Move move = (Move)client.execute("/ChessServer/getMove",username);
+if(move==null)
+{
+message = new JLabel("No moves");
+message.setFont(messageFont);
+JOptionPane.showMessageDialog(null,message);
+}
+int x1 = move.fromX;
+int y1 = move.fromY;
+int x2 = move.toX;
+int y2 = move.toY;
+String movePiece = board[x1][y1];
+board[x2][y2] = movePiece;
+boardPanel.revalidate();
+boardPanel.repaint();
+}catch(Exception e)
+{
+//do nothing
+}
 }
 });
 t3.start();
@@ -1345,8 +1372,10 @@ int y2 = (int) toBtn.getClientProperty("col");
 String movingPiece = board[x1][y1];
 toBtn.setIcon(iconMap.get(movingPiece));
 fromBtn.setIcon(null);
-board[x2][y2] = movingPiece;
-board[x1][y1] = null;
+chessBoard.x1 = x1;
+chessBoard.y1 = y1;
+chessBoard.x2 = x2;
+chessBoard.y2 = y2;
 }
 public String showPromotionDialog()
 {

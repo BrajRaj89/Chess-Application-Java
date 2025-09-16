@@ -1,4 +1,4 @@
-package com.chess.server;
+package com.chess.board;
 public class Move implements java.io.Serializable
 {
 public byte player;

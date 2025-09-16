@@ -3,6 +3,7 @@ import com.chess.server.dl.*;
 import com.chess.common.*;
 import com.nframework.server.annotations.*;
 import java.util.*;
+import com.chess.server.board.*;
 
 @Path("/ChessServer")
 public class ChessServer
@@ -12,6 +13,7 @@ static private Set<String> loggedInMembers;
 static private Set<String>  playingMembers;
 static private Map<String,List<Message>>inboxes;
 static private Map<String,Game> games;
+static private Map<String,Move> moves;
 static
 {
 populateDataStructures();
@@ -184,15 +186,40 @@ public boolean canIplay(String gameId,String username)
 return false;
 }
 @Path("/submitMove")
-public void submitMove(String byUsername,byte piece,int fromX,int fromY,int toX,int toY)
+public boolean submitMove(String byUsername,String piece,int fromX,int fromY,int toX,int toY)
 {
-
+boolean flag = false;
+Game game = games.get(byUsername);
+String board[][] = game.board;
+if(piece.contains("k.png"))
+{
+flag = ValidateMove.validateKing(fromX,fromX,toX,toY);
+}else if(piece.contains("p.png"))
+{
+flag = ValidateMove.validatePawn(fromX, fromY, toX, toY, flag, flag);
+}else
+{
+flag = ValidateMove.validate(piece, fromX, fromY, toX, toY);
+}
+if(flag){
+String pieceString = board[fromX][fromY];
+board[toX][toY] = pieceString;
+Move move  = new Move();
+move.fromX = fromX;
+move.fromY = fromY;
+move.toX = toX;
+move.toY = toY;
+moves.put(byUsername,move);
+return true;
+}
+return false;
 }
 @Path("/getMove")
 public Move getOpponentsMove(String username)
 {
-
-return null;
+Move move = moves.get(username);
+if(move==null) return null;
+return move;
 }
 @Path("/shareBoard")
 public void shareBoard(String user1,String user2)
