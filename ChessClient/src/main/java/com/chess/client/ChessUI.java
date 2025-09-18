@@ -836,7 +836,8 @@ JButton submitBtn = new JButton("Submit Move");
 submitBtn.addActionListener(_->{
 try
 {
-boolean flag = (boolean)client.execute("/ChessClient/submitMove",x1,y1,x2,y2);
+boolean flag = (boolean)client.execute("/ChessServer/submitMove",username,x1,y1,x2,y2);
+System.out.println(flag);
 if(flag)
 {
 message = new JLabel("Move submitted");
@@ -851,9 +852,12 @@ JOptionPane.showMessageDialog(null,message);
 javax.swing.Timer t3 = new Timer(10000,new ActionListener() {
 public void actionPerformed(ActionEvent ae)
 {
+System.out.println("got called timer");
 try
 {
-Move move = (Move)client.execute("/ChessServer/getMove",username);
+Object moveObject = client.execute("/ChessServer/getMove",username);
+String moveObjString = gson.toJson(moveObject);
+Move move = gson.fromJson(moveObjString,Move.class);
 if(move==null)
 {
 message = new JLabel("No moves");
