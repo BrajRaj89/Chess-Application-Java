@@ -186,17 +186,20 @@ public boolean canIplay(String gameId,String username)
 return false;
 }
 @Path("/submitMove")
-public boolean submitMove(String byUsername,String piece,int fromX,int fromY,int toX,int toY)
+public boolean submitMove(String byUsername,int fromX,int fromY,int toX,int toY)
 {
+System.out.println("submit move got called");
 boolean flag = false;
 Game game = games.get(byUsername);
 String board[][] = game.board;
+String piece = board[fromX][fromY];
 if(piece.contains("k.png"))
 {
 flag = ValidateMove.validateKing(fromX,fromX,toX,toY);
 }else if(piece.contains("p.png"))
 {
-flag = ValidateMove.validatePawn(fromX, fromY, toX, toY, flag, flag);
+boolean isWhite = piece.contains("w");
+flag = ValidateMove.validatePawn(fromX, fromY, toX, toY,isWhite,true);
 }else
 {
 flag = ValidateMove.validate(piece, fromX, fromY, toX, toY);
@@ -210,15 +213,19 @@ move.fromY = fromY;
 move.toX = toX;
 move.toY = toY;
 moves.put(byUsername,move);
+System.out.println("ends here");
 return true;
 }
+System.out.println("ends  with false here ");
 return false;
 }
 @Path("/getMove")
 public Move getOpponentsMove(String username)
 {
+System.out.println("move got called");
 Move move = moves.get(username);
 if(move==null) return null;
+System.out.println("get move ends");
 return move;
 }
 @Path("/shareBoard")
