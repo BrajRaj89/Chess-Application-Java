@@ -1,8 +1,8 @@
 package com.chess.board;
 public class Move implements java.io.Serializable
 {
-public byte player;
-public byte piece;
+public String toUser;
+public String piece;
 public int fromX;
 public int fromY;
 public int toX;

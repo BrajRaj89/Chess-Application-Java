@@ -3,6 +3,7 @@ import com.chess.server.dl.*;
 import com.chess.common.*;
 import com.nframework.server.annotations.*;
 import java.util.*;
+import com.google.gson.*;
 import com.chess.server.board.*;
 
 @Path("/ChessServer")
@@ -186,34 +187,34 @@ public boolean canIplay(String gameId,String username)
 return false;
 }
 @Path("/submitMove")
-public boolean submitMove(String byUsername,int fromX,int fromY,int toX,int toY)
+public boolean submitMove(String fromUser,String moveString)
 {
+Gson gson = new Gson();
+Move move = gson.fromJson(moveString,Move.class);
 System.out.println("submit move got called");
 boolean flag = false;
-Game game = games.get(byUsername);
+Game game = games.get(fromUser);
 String board[][] = game.board;
-String piece = board[fromX][fromY];
+String piece = board[move.fromX][move.fromY];
+System.out.println(piece);
 if(piece.contains("k.png"))
 {
-flag = ValidateMove.validateKing(fromX,fromX,toX,toY);
+flag = ValidateMove.validateKing(move.fromX,move.fromX,move.toX,move.toY);
 }else if(piece.contains("p.png"))
 {
+System.out.print("is pawn");
 boolean isWhite = piece.contains("w");
-flag = ValidateMove.validatePawn(fromX, fromY, toX, toY,isWhite,true);
+flag = ValidateMove.validatePawn(move.fromX,move.fromY,move.toX,move.toY,isWhite,false);
 }else
 {
-flag = ValidateMove.validate(piece, fromX, fromY, toX, toY);
+flag = ValidateMove.validate(piece,move.fromX,move.fromY,move.toX,move.toY);
 }
 if(flag){
-String pieceString = board[fromX][fromY];
-board[toX][toY] = pieceString;
-Move move  = new Move();
-move.fromX = fromX;
-move.fromY = fromY;
-move.toX = toX;
-move.toY = toY;
-moves.put(byUsername,move);
+String pieceString = board[move.fromX][move.fromY];
+board[move.toX][move.toY] = pieceString;
+System.out.println(fromUser+" is putting move for "+move.toUser);
 System.out.println("ends here");
+moves.put(move.toUser, move);
 return true;
 }
 System.out.println("ends  with false here ");
@@ -222,9 +223,12 @@ return false;
 @Path("/getMove")
 public Move getOpponentsMove(String username)
 {
-System.out.println("move got called");
+System.out.println("move got called from "+username);
 Move move = moves.get(username);
-if(move==null) return null;
+if(move==null)
+{
+System.out.println("not found its move");
+}
 System.out.println("get move ends");
 return move;
 }
@@ -243,6 +247,7 @@ board[7] = new String[]{ "wr.png", "wkt.png", "wb.png", "wq.png", "wk.png", "wb.
 game.board = board;
 games.put(user2,game);
 games.put(user1, game);
+moves = new HashMap<>();
 System.out.println("shareBoard completes here");
 }
 @Path("/getBoard")
