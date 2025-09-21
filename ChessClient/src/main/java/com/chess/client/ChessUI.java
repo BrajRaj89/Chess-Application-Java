@@ -23,13 +23,13 @@ private JScrollPane availableUsersListScrollPane;
 private InvitationTableModel invitationTableModel;
 private JTable invitationMessagesList;
 private JScrollPane invitationMessagesListScrollPane;
-private javax.swing.Timer timer,t1,t2;
+private Timer timer,t1,t2,t3,t4;
 private Container container;
 private NFrameworkClient client;
 private JPanel panel1;
 private JPanel panel2;
 private JPanel panel3;
-private JLabel message;
+private JLabel messageLabel;
 private int w,h,cw,ch;
 private Font messageFont;
 private ChessBoard chessBoard;
@@ -91,10 +91,10 @@ Border border = new LineBorder(new Color(0, 86, 109), 1, true);
 panel3.setBorder(border);
 JButton leaveBtn = new JButton("Leave game ➜");
 leaveBtn.addActionListener(_->{
-message = new JLabel("Are you sure? Exit Game");
-message.setFont(messageFont);
-message.setForeground(new Color(48,55,147));
-int selected = JOptionPane.showConfirmDialog(null,message,"Select",JOptionPane.YES_NO_OPTION);
+messageLabel = new JLabel("Are you sure? Exit Game");
+messageLabel.setFont(messageFont);
+messageLabel.setForeground(new Color(48,55,147));
+int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
 System.exit(0);
@@ -112,6 +112,30 @@ private void setApperance()
 }
 private void addListeners()
 {
+
+t4 = new javax.swing.Timer(5000,new ActionListener() {
+public void actionPerformed(ActionEvent ae)
+{
+System.out.println("got called timer t4");
+try
+{
+Object moveObject = client.execute("/ChessServer/getMove",username);
+String moveObjString = gson.toJson(moveObject);
+Move move = gson.fromJson(moveObjString,Move.class);
+if(move==null)
+{
+messageLabel = new JLabel("No moves");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
+}
+chessBoard.updateBoard(move);
+}catch(Exception e)
+{
+//do nothing
+}
+}
+});
+t4.setRepeats(false);
 t1 = new javax.swing.Timer(2000,new ActionListener(){
 public void actionPerformed(ActionEvent ae)
 {
@@ -172,6 +196,7 @@ client.execute("/ChessServer/removeMessage",username,"StartGame");
 //do nothing
 }
 startGame(username,message.fromUsername);
+t4.start();
 }else if(message.type==MESSAGE_TYPE.END_GAME)
 {
 try
@@ -347,7 +372,7 @@ passwordLabel.setFont(labelFont);
 passwordField.setFont(fieldFont);
 passwordLabel.setBounds(130,195,200,180);
 passwordField.setBounds(250,274,300,40);
-JButton loginBtn = new JButton("Login  🡨");
+JButton loginBtn = new JButton("Login");
 JButton createAc = new JButton("New Account");
 loginBtn.setFont(btnFont);
 createAc.setFont(btnFont);
@@ -368,9 +393,9 @@ String usernameVal = usernameField.getText().trim();
 String passwordVal = passwordField.getText().trim();
 if(usernameVal.length()==0 || passwordVal.length()==0)
 {
-message  = new JLabel("Empty username/password");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel  = new JLabel("Empty username/password");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
 boolean authentic=false;
@@ -384,23 +409,23 @@ this.username = usernameVal;
 showHomeUI();
 }else
 {
-message  = new JLabel("Invalid username/password");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel  = new JLabel("Invalid username/password");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 }
 }catch(Throwable t)
 {
-message = new JLabel("Server is not running Connection refused");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Server is not running Connection refused");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 System.out.println(t.getMessage());
 System.exit(0);
 }
 });
 createAc.addActionListener(_->{
-message = new JLabel("This feature is unavailble");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("This feature is unavailble");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 });
 container.setLayout(new BorderLayout());
 container.add(loginPanel,BorderLayout.CENTER);
@@ -786,7 +811,6 @@ private JTextField statusField;
 private JTextField player1Name;
 private JTextField player2Name;
 private Font messageFont;
-private JLabel message;
 private JPanel capturePane;
 public JPanel boardPanel;
 public JPanel sidePanel;
@@ -816,10 +840,10 @@ sidePanel.setBounds(d.width - 457, 2, 440, d.height - 83);
 sidePanel.setBorder(border);
 JButton cancelBtn = new JButton("Exit Game");
 cancelBtn.addActionListener(_->{
-message = new JLabel("Are you sure? Exit Game");
-message.setFont(messageFont);
-message.setForeground(new Color(48,55,147));
-int selected = JOptionPane.showConfirmDialog(null,message,"Select",JOptionPane.YES_NO_OPTION);
+messageLabel = new JLabel("Are you sure? Exit Game");
+messageLabel.setFont(messageFont);
+messageLabel.setForeground(new Color(48,55,147));
+int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
 showHomeUI();
@@ -836,23 +860,32 @@ JButton submitBtn = new JButton("Submit Move");
 submitBtn.addActionListener(_->{
 try
 {
-boolean flag = (boolean)client.execute("/ChessServer/submitMove",username,x1,y1,x2,y2);
-System.out.println(flag);
+boolean flag = false;
+Move  move = new Move();
+move.fromX = x1;
+move.fromY = y1;
+move.toX = x2;
+move.toY = y2;
+move.toUser = user2;
+System.out.println("user2 is "+user2);
+String moveString  = gson.toJson(move);
+flag = (boolean)client.execute("/ChessServer/submitMove",username,moveString);
 if(flag)
 {
-message = new JLabel("Move submitted");
-message.setFont(messageFont);
-message.setForeground(new Color(48,55,147));
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Move submitted");
+messageLabel.setFont(messageFont);
+messageLabel.setForeground(new Color(48,55,147));
+JOptionPane.showMessageDialog(null,messageLabel);
 }
+t4.start();
 }catch(Exception e)
 {
-//do nothing
+System.out.println(e.getMessage());
 }
-javax.swing.Timer t3 = new Timer(10000,new ActionListener() {
+t3 = new Timer(10000,new ActionListener() {
 public void actionPerformed(ActionEvent ae)
 {
-System.out.println("got called timer");
+System.out.println("got called timer t3");
 try
 {
 Object moveObject = client.execute("/ChessServer/getMove",username);
@@ -860,18 +893,11 @@ String moveObjString = gson.toJson(moveObject);
 Move move = gson.fromJson(moveObjString,Move.class);
 if(move==null)
 {
-message = new JLabel("No moves");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("No moves");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 }
-int x1 = move.fromX;
-int y1 = move.fromY;
-int x2 = move.toX;
-int y2 = move.toY;
-String movePiece = board[x1][y1];
-board[x2][y2] = movePiece;
-boardPanel.revalidate();
-boardPanel.repaint();
+chessBoard.updateBoard(move);
 }catch(Exception e)
 {
 //do nothing
@@ -880,18 +906,14 @@ boardPanel.repaint();
 });
 t3.start();
 t3.setRepeats(false);
-message = new JLabel("Move submitted");
-message.setFont(messageFont);
-message.setForeground(new Color(48,55,147));
-JOptionPane.showMessageDialog(null,message);
 });
 JPanel btnPanel = new JPanel();
 JButton restartBtn = new JButton("Restart");
 restartBtn.addActionListener(_->{
-message = new JLabel("Are you sure? Restart game");
-message.setFont(messageFont);
-message.setForeground(new Color(48,55,147));
-int selected = JOptionPane.showConfirmDialog(null,message,"Select",JOptionPane.YES_NO_OPTION);
+messageLabel = new JLabel("Are you sure? Restart game");
+messageLabel.setFont(messageFont);
+messageLabel.setForeground(new Color(48,55,147));
+int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
 resetBoard();
@@ -899,10 +921,10 @@ resetBoard();
 });
 JButton resignBtn = new JButton("Resign");
 resignBtn.addActionListener(_->{
-message = new JLabel("Are you sure? Resign");
-message.setFont(messageFont);
-message.setForeground(new Color(48,55,147));
-int selected = JOptionPane.showConfirmDialog(null,message,"Select",JOptionPane.YES_NO_OPTION);
+messageLabel = new JLabel("Are you sure? Resign");
+messageLabel.setFont(messageFont);
+messageLabel.setForeground(new Color(48,55,147));
+int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
 showHomeUI();
@@ -968,6 +990,21 @@ sidePanel.add(statusPane);
 sidePanel.add(btnPanel);
 initializeIconMap();
 initializeBoard(boardPanel);
+}
+public void updateBoard(Move move)
+{
+int x1 = move.fromX;
+int y1 = move.fromY;
+int x2 = move.toX;
+int y2 = move.toY;
+String movePiece = board[x1][y1];
+board[x2][y2] = movePiece;
+JButton btn1 = boardSquares[x1][y1];
+JButton btn2 = boardSquares[x2][y2];
+move(btn1,btn2);
+turn = (turn == 1) ? 2 : 1;
+boardPanel.revalidate();
+boardPanel.repaint();
 }
 private void initializeIconMap()
 {
@@ -1181,9 +1218,9 @@ if(!isValidMove)
 {
 pressed1 = null;
 Font messageFont  = new Font("Century",Font.BOLD,15);
-JLabel  message = new JLabel("Not valid Move");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Not valid Move");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
 ImageIcon imageIcon=null;
@@ -1233,16 +1270,16 @@ if(capturedPiece!=null)
 {
 if(capturedPiece.equals("bk.png"))
 {
-message = new JLabel("Player White Wins! game ends");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Player White Wins! game ends");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
 else if(capturedPiece.equals("wk.png"))
 {
-message = new JLabel("Player Black Wins! game ends");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Player Black Wins! game ends");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
 }
@@ -1250,9 +1287,9 @@ return;
 boolean isCcheck = ChessCheckDetector.isInCheck(board,currentKing);
 if(isCcheck)
 {
-message = new JLabel("Invalid Move");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Invalid Move");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 move(pressed,pressed1);
 pressed.setIcon(imageIcon);
 int b= (int)pressed.getClientProperty("row");
@@ -1305,9 +1342,9 @@ if(k1found && k2found)
 kkp = kingsTooClose(b1,b2,w1,w2);
 if(kkp)
 {
-message = new JLabel("Wrong king position");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Wrong king position");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 move(pressed,pressed1);
 pressed.setIcon(imageIcon);
 int b= (int)pressed.getClientProperty("row");
@@ -1322,17 +1359,17 @@ boolean hasLegalMove = ChessCheckDetector.hasAnyLegalMove(board,opponentKing);
 if(isOCheck && !hasLegalMove)
 {
 String player = currentKing.equals("wk.png")?"White":"Black";
-message = new JLabel("Match ends "+player+" Wins");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Match ends "+player+" Wins");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 boardPanel.setEnabled(false);
 pressed1=null;
 return;
 }else if(!isOCheck && !hasLegalMove)
 {
-message = new JLabel("Stalemate");
-message.setFont(messageFont);
-JOptionPane.showMessageDialog(null,message);
+messageLabel = new JLabel("Stalemate");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 boardPanel.setEnabled(false);
 }
 else if(isOCheck)
@@ -1384,10 +1421,10 @@ chessBoard.y2 = y2;
 public String showPromotionDialog()
 {
 String choices[] = {"Queen","Bishop","Rook","Knight"};
-message = new JLabel("Select piece for Promotion");
+messageLabel = new JLabel("Select piece for Promotion");
 Font f = new Font("monospaced",Font.BOLD,15);  
-message.setFont(f);
-String selected= (String)JOptionPane.showInputDialog(null,message,"Pawn Promotion",JOptionPane.QUESTION_MESSAGE,null,choices,choices[0]);
+messageLabel.setFont(f);
+String selected= (String)JOptionPane.showInputDialog(null,messageLabel,"Pawn Promotion",JOptionPane.QUESTION_MESSAGE,null,choices,choices[0]);
 return selected;
 }
 public boolean kingsTooClose(int x1, int y1, int x2, int y2)
