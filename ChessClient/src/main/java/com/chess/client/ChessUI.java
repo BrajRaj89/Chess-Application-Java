@@ -23,7 +23,7 @@ private JScrollPane availableUsersListScrollPane;
 private InvitationTableModel invitationTableModel;
 private JTable invitationMessagesList;
 private JScrollPane invitationMessagesListScrollPane;
-private Timer timer,t1,t2,t3,t4;
+private Timer timer,t1,t2,t3,t4,t5;
 private Container container;
 private NFrameworkClient client;
 private JPanel panel1;
@@ -34,6 +34,8 @@ private int w,h,cw,ch;
 private Font messageFont;
 private ChessBoard chessBoard;
 private Gson gson;
+private boolean isSecond;
+private boolean isMoved;
 public ChessUI()
 {
 this.client = new NFrameworkClient();
@@ -49,6 +51,7 @@ setLocation(cw,ch);
 }
 private void initComponents()
 {
+isSecond = false;
 gson = new Gson();
 messageFont = new Font("monospaced",Font.BOLD,16);
 panel1 = new JPanel();
@@ -112,26 +115,35 @@ private void setApperance()
 }
 private void addListeners()
 {
-
-t4 = new javax.swing.Timer(5000,new ActionListener() {
+t5 = new javax.swing.Timer(500,new ActionListener() {
 public void actionPerformed(ActionEvent ae)
 {
-System.out.println("got called timer t4");
+System.out.println("got called timer t5");
 try
 {
 Object moveObject = client.execute("/ChessServer/getMove",username);
 String moveObjString = gson.toJson(moveObject);
 Move move = gson.fromJson(moveObjString,Move.class);
-if(move==null)
+if(move!=null)
+{
+isMoved = true;
+chessBoard.updateBoard(move);
+t5.stop();
+}
+}catch(Exception e)
+{
+//do nothing
+}
+}
+});
+t4 = new javax.swing.Timer(10000,new ActionListener() {
+public void actionPerformed(ActionEvent ae)
+{
+if(!isMoved)
 {
 messageLabel = new JLabel("No moves");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
-}
-chessBoard.updateBoard(move);
-}catch(Exception e)
-{
-//do nothing
 }
 }
 });
@@ -195,8 +207,8 @@ client.execute("/ChessServer/removeMessage",username,"StartGame");
 {
 //do nothing
 }
+isSecond = true;
 startGame(username,message.fromUsername);
-t4.start();
 }else if(message.type==MESSAGE_TYPE.END_GAME)
 {
 try
@@ -207,6 +219,53 @@ client.execute("/ChessServer/removeMessage",username,"EndGame");
 //do nothing
 }
 showResultUI(username,message.fromUsername,"Won");
+}else if(message.type==MESSAGE_TYPE.RESTART)
+{
+messageLabel = new JLabel(message.fromUsername+" Requested to Restart");
+messageLabel.setFont(messageFont);
+int selected = JOptionPane.showConfirmDialog(null, messageLabel,"Agree",JOptionPane.OK_CANCEL_OPTION);
+if(selected==0)
+{
+chessBoard.resetBoard();
+try
+{
+client.execute("/ChessServer/removeMessage",username,"Restart");
+client.execute("/ChessServer/setMessage",username,message.fromUsername,"RAccepted");
+}catch(Exception e)
+{
+}
+}else
+{
+try
+{
+client.execute("/ChessServer/removeMessage",username,"Restart");
+client.execute("/ChessServer/setMessage",username,message.fromUsername,"RRejected");
+}catch(Exception e)
+{
+}
+}
+}else if(message.type==MESSAGE_TYPE.RESTART_ACCEPTED)
+{
+try
+{
+client.execute("/ChessServer/removeMessage",username,"RAccepted");
+}catch(Exception e)
+{
+//do something
+}
+chessBoard.resetBoard();
+}else if(message.type==MESSAGE_TYPE.RESTART_REJECTED)
+{
+try
+{
+client.execute("/ChessServer/removeMessage",username,"RRejected");
+}catch(Exception e)
+{
+//do something
+}
+messageLabel = new JLabel("Request Rejected for Restart");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null, messages, resultJson, ABORT);
 }
 }//for loop ends 
 }// if ends
@@ -514,6 +573,8 @@ System.out.println("error in sending message "+exception.getMessage());
 }
 public void startGame(String username1,String username2)
 {
+t4.start();
+t5.start();
 hideUI();
 String board[][]=null;
 Object boardObj=null;
@@ -528,6 +589,13 @@ String resultJson = gson.toJson(boardObj,Object.class);
 java.lang.reflect.Type listType = new TypeToken<String [][]>() {}.getType();
 board = gson.fromJson(resultJson, listType);
 chessBoard = new ChessBoard(username1, username2,board);
+if(isSecond)
+{
+chessBoard.initializeBoard2(chessBoard.boardPanel);
+}else
+{
+chessBoard.initializeBoard(chessBoard.boardPanel);
+}
 Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 setSize(screenSize.width,screenSize.height-41);
 setLocation(0,0);
@@ -745,7 +813,6 @@ javax.swing.Timer t = expiryTimer.remove(msg);
 if(t!=null) t.stop();
 fireTableRowsDeleted(index,index);
 }
-
 }// inner class ends 
 
 class DualButtonRenderer implements TableCellRenderer 
@@ -821,7 +888,7 @@ public int x1,y1,x2,y2;
 public ChessBoard(String user1,String user2,String [][]board)
 {
 this.board =board;
-redBtns = new ArrayList<>();
+redBtns = new ArrayList<>(); 
 redColor = new Color(255,0,0);
 pieceInAttack=null;
 messageFont = new Font("monospaced",Font.BOLD,16);
@@ -867,7 +934,6 @@ move.fromY = y1;
 move.toX = x2;
 move.toY = y2;
 move.toUser = user2;
-System.out.println("user2 is "+user2);
 String moveString  = gson.toJson(move);
 flag = (boolean)client.execute("/ChessServer/submitMove",username,moveString);
 if(flag)
@@ -876,8 +942,18 @@ messageLabel = new JLabel("Move submitted");
 messageLabel.setFont(messageFont);
 messageLabel.setForeground(new Color(48,55,147));
 JOptionPane.showMessageDialog(null,messageLabel);
+turn = (turn == 1) ? 2 : 1;
+if(turn==1)
+{
+statusField.setText("White 's turn");
+}
+else 
+{
+statusField.setText("Black 's turn");
+} 
 }
 t4.start();
+t5.start();
 }catch(Exception e)
 {
 System.out.println(e.getMessage());
@@ -917,6 +993,13 @@ int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionP
 if(selected==0)
 {
 resetBoard();
+try
+{
+client.execute("/ChessServer/setMessage",user1,user2,"Restart");
+}catch(Exception e)
+{
+System.out.println("some Problem in restart");
+}
 }
 });
 JButton resignBtn = new JButton("Resign");
@@ -989,7 +1072,6 @@ sidePanel.add(player1 );
 sidePanel.add(statusPane);
 sidePanel.add(btnPanel);
 initializeIconMap();
-initializeBoard(boardPanel);
 }
 public void updateBoard(Move move)
 {
@@ -1003,8 +1085,20 @@ JButton btn1 = boardSquares[x1][y1];
 JButton btn2 = boardSquares[x2][y2];
 move(btn1,btn2);
 turn = (turn == 1) ? 2 : 1;
+if(turn==1)
+{
+statusField.setText("White 's turn");
+}
+else 
+{
+statusField.setText("Black 's turn");
+} 
 boardPanel.revalidate();
 boardPanel.repaint();
+}
+public void updateCaptureBoard()
+{
+
 }
 private void initializeIconMap()
 {
@@ -1017,9 +1111,33 @@ iconMap.put(piece, new ImageIcon(url));
 }
 private void initializeBoard(JPanel boardPanel)
 {
-for(int i = 0; i < 8; i++)
+for(int i = 0; i <8; i++)
 {
-for(int j = 0; j < 8; j++)
+for(int j = 0; j <8; j++)
+{
+JButton piece = new JButton(); 
+piece.addActionListener(this);
+piece.putClientProperty("row", i);
+piece.putClientProperty("col", j);
+piece.setBackground((i + j)%2==0?Color.WHITE:new Color(32,32,32));
+piece.setBorderPainted(false);
+if(board[i][j] != null)
+{
+piece.setIcon(iconMap.get(board[i][j]));
+}else
+{
+piece.setIcon(null);
+}
+boardSquares[i][j] = piece;
+boardPanel.add(piece);
+}
+}
+}
+private void initializeBoard2(JPanel boardPanel)
+{
+for(int i = 7; i >=0; i--)
+{
+for(int j = 7; j >=0; j--)
 {
 JButton piece = new JButton(); 
 piece.addActionListener(this);
@@ -1083,7 +1201,11 @@ int y = (int) pressed.getClientProperty("col");
 if(pressed1 == null)
 {
 if(board[x][y] == null) return;
-if((turn == 1 && !board[x][y].startsWith("w")) || (turn == 2 && !board[x][y].startsWith("b"))) return;
+if((turn == 1 && !board[x][y].startsWith("w")) || (turn == 2 && !board[x][y].startsWith("b"))) 
+{
+JOptionPane.showMessageDialog(null,"Not your turn");
+return;
+}
 pressed1 = pressed;
 }
 else
@@ -1184,15 +1306,6 @@ p2 = boardSquares[x1][y1-1];
 p1.setIcon(iconMap.get(movingPiece));
 p2.setIcon(iconMap.get(capturedPiece));
 }
-if(turn==2)
-{
-statusField.setText("White 's turn");
-}
-else 
-{
-statusField.setText("Black 's turn");
-} 
-turn = (turn == 1) ? 2 : 1;
 board[x1][y1] = null;
 board[x2][y2] = null;
 System.out.println("Castling attempt");
@@ -1392,15 +1505,6 @@ redBtns.add(pieceInAttack);
 }
 }
 }
-turn = (turn ==1)?2:1;
-if(turn==1)
-{
-statusField.setText("White 's turn");
-}
-else 
-{
-statusField.setText("Black 's turn");
-}
 pressed1 = null;
 }
 }
@@ -1438,7 +1542,13 @@ public void resetBoard()
 boardPanel.removeAll();
 boardPanel.revalidate();
 boardPanel.repaint();
+if(isSecond)
+{
+initializeBoard2(boardPanel);
+}else
+{
 initializeBoard(boardPanel);
+}
 }    
 }
 

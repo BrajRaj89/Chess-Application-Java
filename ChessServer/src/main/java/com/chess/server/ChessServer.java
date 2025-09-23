@@ -124,6 +124,9 @@ if(tp.equals("Accepted")) type = MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type = MESSAGE_TYPE.CHALLENGE_REJECTED;
 if(tp.equals("StartGame")) type = MESSAGE_TYPE.START_GAME;
 if(tp.equals("EndGame")) type = MESSAGE_TYPE.END_GAME;
+if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
+if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
+if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
 System.out.println(type);
 System.out.println(username);
 try
@@ -157,6 +160,9 @@ if(tp.equals("Accepted")) type=MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type=MESSAGE_TYPE.CHALLENGE_REJECTED;
 if(tp.equals("StartGame")) type=MESSAGE_TYPE.START_GAME;
 if(tp.equals("EndGame")) type=MESSAGE_TYPE.END_GAME;
+if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
+if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
+if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
 Message msg = new Message();
 msg.fromUsername= fromUsername;
 msg.toUsername = toUsername;
@@ -229,7 +235,7 @@ if(move==null)
 {
 System.out.println("not found its move");
 }
-System.out.println("get move ends");
+moves.remove(username);
 return move;
 }
 @Path("/shareBoard")
