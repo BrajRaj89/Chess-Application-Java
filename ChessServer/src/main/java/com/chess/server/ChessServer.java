@@ -75,6 +75,13 @@ System.out.println(e.getMessage()+"getAvailable method");
 }
 return null;
 }
+@Path("/register")
+public void addUser(String username,String password)
+{
+MemberDTO member = new MemberDTO();
+member.username = username;
+member.password = password;
+}
 @Path("/inviteUser")
 public void inviteUser(String fromUsername,String toUsername)
 {
