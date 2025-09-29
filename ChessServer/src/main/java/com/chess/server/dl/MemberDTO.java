@@ -4,7 +4,7 @@ public class MemberDTO
 {
 public String username;
 public String password;
-MemberDTO()
+public MemberDTO()
 {
 this.username="";
 this.password="";

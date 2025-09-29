@@ -7,5 +7,8 @@ public int fromX;
 public int fromY;
 public int toX;
 public int toY;
+public boolean captured;
+public String captureString;
+public boolean capturedByWhite;
 public boolean isLastMove;
 }

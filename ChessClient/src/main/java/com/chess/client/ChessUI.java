@@ -14,16 +14,17 @@ import java.util.*;
 import javax.swing.table.*;
 import javax.swing.border.*;
 import java.net.*;
-public class ChessUI extends JFrame
+public class ChessUI extends JFrame 
 {
 private String username;
+private String username2;
 private AvailableUsersListModel availableUsersListModel;
 private JTable availableUsersList;
 private JScrollPane availableUsersListScrollPane;
 private InvitationTableModel invitationTableModel;
 private JTable invitationMessagesList;
 private JScrollPane invitationMessagesListScrollPane;
-private Timer timer,t1,t2,t3,t4,t5;
+private Timer timer,t1,t2,t3;
 private Container container;
 private NFrameworkClient client;
 private JPanel panel1;
@@ -35,7 +36,12 @@ private Font messageFont;
 private ChessBoard chessBoard;
 private Gson gson;
 private boolean isSecond;
-private boolean isMoved;
+private String captureString;
+private boolean capturedByWhite;
+private boolean captured;
+private Object boardObject;
+private String board[][];
+java.lang.reflect.Type listType;
 public ChessUI()
 {
 this.client = new NFrameworkClient();
@@ -48,6 +54,40 @@ cw = d.width/2-w/2;
 ch = d.height/2-h/2;
 setSize(w,h);
 setLocation(cw,ch);
+setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+addWindowListener(new WindowAdapter(){
+public void windowClosing(WindowEvent e)
+{
+try
+{
+messageLabel = new JLabel("Are you sure? Exit Game");
+messageLabel.setFont(messageFont);
+messageLabel.setForeground(new Color(48,55,147));
+int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
+if(selected==0)
+{
+System.out.println("yes selected");
+String wdw = getTitle();
+if(wdw.equals("ChessBoard"))
+{
+showHomeUI();
+client.execute("/ChessServer/setMessage",username,username2,"EndGame");
+}else
+{
+System.out.println("logout");
+client.execute("/ChessServer/logout",username);
+System.exit(0);
+}
+}else
+{
+System.out.println("not selected");
+}
+}catch(Throwable t)
+{
+JOptionPane.showMessageDialog(ChessUI.this,t.toString());
+}
+}
+});
 }
 private void initComponents()
 {
@@ -115,10 +155,10 @@ private void setApperance()
 }
 private void addListeners()
 {
-t5 = new javax.swing.Timer(500,new ActionListener() {
+t3 = new javax.swing.Timer(500,new ActionListener() {
 public void actionPerformed(ActionEvent ae)
 {
-System.out.println("got called timer t5");
+System.out.println("got called timer t3");
 try
 {
 Object moveObject = client.execute("/ChessServer/getMove",username);
@@ -126,9 +166,13 @@ String moveObjString = gson.toJson(moveObject);
 Move move = gson.fromJson(moveObjString,Move.class);
 if(move!=null)
 {
-isMoved = true;
 chessBoard.updateBoard(move);
-t5.stop();
+if(move.captured)
+{
+chessBoard.addCapturedPiece(move.captureString, move.capturedByWhite);
+}
+t3.stop();
+chessBoard.submitBtn.setEnabled(true);
 }
 }catch(Exception e)
 {
@@ -136,18 +180,6 @@ t5.stop();
 }
 }
 });
-t4 = new javax.swing.Timer(10000,new ActionListener() {
-public void actionPerformed(ActionEvent ae)
-{
-if(!isMoved)
-{
-messageLabel = new JLabel("No moves");
-messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null,messageLabel);
-}
-}
-});
-t4.setRepeats(false);
 t1 = new javax.swing.Timer(2000,new ActionListener(){
 public void actionPerformed(ActionEvent ae)
 {
@@ -155,7 +187,7 @@ try
 {
 Object result= client.execute("/ChessServer/getMessages",username);
 String resultJson = gson.toJson(result,Object.class);
-java.lang.reflect.Type listType = new TypeToken<java.util.List<Message>>() {}.getType();
+ listType = new TypeToken<java.util.List<Message>>() {}.getType();
 java.util.List<Message> messages = gson.fromJson(resultJson, listType);
 if(messages!=null)
 {
@@ -226,14 +258,21 @@ messageLabel.setFont(messageFont);
 int selected = JOptionPane.showConfirmDialog(null, messageLabel,"Agree",JOptionPane.OK_CANCEL_OPTION);
 if(selected==0)
 {
-chessBoard.resetBoard();
 try
 {
 client.execute("/ChessServer/removeMessage",username,"Restart");
+client.execute("/ChessServer/shareBoard",username,username2);
 client.execute("/ChessServer/setMessage",username,message.fromUsername,"RAccepted");
+boardObject  = client.execute("/ChessServer/getBoard",username);
+resultJson = gson.toJson(boardObject,Object.class);
+listType = new TypeToken<String [][]>() {}.getType();
+board = gson.fromJson(resultJson, listType);
+chessBoard.board = board;
 }catch(Exception e)
 {
+//do nothing    
 }
+chessBoard.resetBoard();
 }else
 {
 try
@@ -249,6 +288,11 @@ client.execute("/ChessServer/setMessage",username,message.fromUsername,"RRejecte
 try
 {
 client.execute("/ChessServer/removeMessage",username,"RAccepted");
+boardObject  = client.execute("/ChessServer/getBoard",username);
+resultJson = gson.toJson(boardObject,Object.class);
+listType = new TypeToken<String [][]>() {}.getType();
+board = gson.fromJson(resultJson, listType);
+chessBoard.board = board;
 }catch(Exception e)
 {
 //do something
@@ -292,20 +336,7 @@ JOptionPane.showMessageDialog(ChessUI.this,t.toString());
 }
 } 
 });
-addWindowListener(new WindowAdapter(){
-public void windowClosing(WindowEvent e)
-{
-try
-{
-System.out.print("logout");
-client.execute("/ChessServer/logout",username);
-}catch(Throwable t)
-{
-JOptionPane.showMessageDialog(ChessUI.this,t.toString());
-}
-System.exit(0);
-}
-});
+
 // now all is setup,let us starts the timer
 timer.start();
 }
@@ -336,6 +367,7 @@ container.setLayout(null);
 public void showResultUI(String winner,String losser,String rst)
 {
 hideUI();
+setTitle(username);
 JLabel heading = new JLabel("Result");
 heading.setFont(new Font("Monospaced",Font.BOLD,60));
 heading.setForeground(new Color(0,51,107));
@@ -367,12 +399,9 @@ message.setFont(fieldFont);
 message.setBounds(120,320,470,40);
 message.setEditable(false);
 message.setText("You have "+rst+" the match");
-JButton RematchBtn = new JButton("Rematch");
 JButton OkBtn = new JButton("Ok");
-RematchBtn.setFont(btnFont);
 OkBtn.setFont(btnFont);
-RematchBtn.setBounds(210,390,130,40);
-OkBtn.setBounds(360,390,130,40);
+OkBtn.setBounds(290,390,130,40);
 whiteStatus.setEditable(false);
 blackStatus.setEditable(false);
 blackStatus.setText(winner+" Won");
@@ -381,9 +410,6 @@ whiteStatus.setBackground(Color.white);
 blackStatus.setBackground(Color.white);
 OkBtn.addActionListener(_->{
 showHomeUI();
-});
-RematchBtn.addActionListener(_->{
-rematch();
 });
 JPanel resultPanel  = new JPanel();
 resultPanel.setLayout(null);
@@ -394,13 +420,11 @@ resultPanel.add(whiteStatus);
 resultPanel.add(blackLabel);
 resultPanel.add(blackStatus);
 resultPanel.add(message);
-resultPanel.add(RematchBtn);
 resultPanel.add(OkBtn);
 setSize(w,h);
 setLocation(cw,ch);
 container.setLayout(new BorderLayout());
 container.add(resultPanel,BorderLayout.CENTER);
-setDefaultCloseOperation(EXIT_ON_CLOSE);
 setVisible(true);	
 }
 public void loginUI()
@@ -490,7 +514,6 @@ container.setLayout(new BorderLayout());
 container.add(loginPanel,BorderLayout.CENTER);
 setResizable(false);
 setVisible(true);
-setDefaultCloseOperation(EXIT_ON_CLOSE);
 }
 
 public void startUI(String opponent)
@@ -573,19 +596,18 @@ System.out.println("error in sending message "+exception.getMessage());
 }
 public void startGame(String username1,String username2)
 {
-t4.start();
-t5.start();
+this.username2 = username2;
+t3.start();
 hideUI();
 String board[][]=null;
-Object boardObj=null;
 try
 {
-boardObj = client.execute("/ChessServer/getBoard",username);
+boardObject = client.execute("/ChessServer/getBoard",username);
 }catch(Throwable t)
 {
 System.out.println("getting error "+t.getMessage());
 }
-String resultJson = gson.toJson(boardObj,Object.class);
+String resultJson = gson.toJson(boardObject,Object.class);
 java.lang.reflect.Type listType = new TypeToken<String [][]>() {}.getType();
 board = gson.fromJson(resultJson, listType);
 chessBoard = new ChessBoard(username1, username2,board);
@@ -870,7 +892,6 @@ private JButton[][] boardSquares = new JButton[8][8];
 private JPanel capturePanel = new JPanel();
 private JPanel whiteCaptured = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 private JPanel blackCaptured = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-private String[][] board;
 private JButton pressed1;
 private int turn = 1;
 private Map<String, ImageIcon> iconMap;
@@ -885,6 +906,8 @@ private JButton pieceInAttack;
 private Color redColor;
 private ArrayList<JButton> redBtns;
 public int x1,y1,x2,y2;
+public String[][] board;
+public JButton submitBtn;
 public ChessBoard(String user1,String user2,String [][]board)
 {
 this.board =board;
@@ -894,8 +917,7 @@ pieceInAttack=null;
 messageFont = new Font("monospaced",Font.BOLD,16);
 pressed1 = null;
 iconMap = new HashMap<>();
-setTitle(user1);
-setDefaultCloseOperation(EXIT_ON_CLOSE);
+setTitle("ChessBoard");
 boardPanel = new JPanel(new GridLayout(8, 8));
 Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 setSize(d.width, d.height);
@@ -923,7 +945,7 @@ client.execute("/ChessServer/setMessage",user1,user2,"EndGame");
 }
 }
 });
-JButton submitBtn = new JButton("Submit Move");
+submitBtn = new JButton("Submit Move");
 submitBtn.addActionListener(_->{
 try
 {
@@ -934,6 +956,15 @@ move.fromY = y1;
 move.toX = x2;
 move.toY = y2;
 move.toUser = user2;
+if(captured)
+{
+move.captured  = true;
+move.captureString = captureString;
+move.capturedByWhite = capturedByWhite;
+}else
+{
+move.captured = false;
+}
 String moveString  = gson.toJson(move);
 flag = (boolean)client.execute("/ChessServer/submitMove",username,moveString);
 if(flag)
@@ -952,36 +983,12 @@ else
 statusField.setText("Black 's turn");
 } 
 }
-t4.start();
-t5.start();
+submitBtn.setEnabled(false);
+t3.start();
 }catch(Exception e)
 {
 System.out.println(e.getMessage());
 }
-t3 = new Timer(10000,new ActionListener() {
-public void actionPerformed(ActionEvent ae)
-{
-System.out.println("got called timer t3");
-try
-{
-Object moveObject = client.execute("/ChessServer/getMove",username);
-String moveObjString = gson.toJson(moveObject);
-Move move = gson.fromJson(moveObjString,Move.class);
-if(move==null)
-{
-messageLabel = new JLabel("No moves");
-messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null,messageLabel);
-}
-chessBoard.updateBoard(move);
-}catch(Exception e)
-{
-//do nothing
-}
-}
-});
-t3.start();
-t3.setRepeats(false);
 });
 JPanel btnPanel = new JPanel();
 JButton restartBtn = new JButton("Restart");
@@ -992,7 +999,6 @@ messageLabel.setForeground(new Color(48,55,147));
 int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
-resetBoard();
 try
 {
 client.execute("/ChessServer/setMessage",user1,user2,"Restart");
@@ -1421,7 +1427,9 @@ btn.setBackground(((l+j)%2==0)?Color.white:new Color(32,32,32));
 }
 if(capturedPiece!=null)
 {
-boolean capturedByWhite = movingPiece.startsWith("w");
+capturedByWhite = movingPiece.startsWith("w");
+captureString = capturedPiece;
+captured = true;
 addCapturedPiece(capturedPiece, capturedByWhite);
 }
 

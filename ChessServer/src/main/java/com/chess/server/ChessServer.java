@@ -217,7 +217,9 @@ flag = ValidateMove.validateKing(move.fromX,move.fromX,move.toX,move.toY);
 {
 System.out.print("is pawn");
 boolean isWhite = piece.contains("w");
-flag = ValidateMove.validatePawn(move.fromX,move.fromY,move.toX,move.toY,isWhite,false);
+boolean isCapturing = false;
+if(board[move.toX][move.toY]!=null) isCapturing =  true;
+flag = ValidateMove.validatePawn(move.fromX,move.fromY,move.toX,move.toY,isWhite,isCapturing);
 }else
 {
 flag = ValidateMove.validate(piece,move.fromX,move.fromY,move.toX,move.toY);

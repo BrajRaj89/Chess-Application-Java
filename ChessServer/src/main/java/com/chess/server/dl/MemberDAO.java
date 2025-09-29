@@ -2,9 +2,17 @@ package com.chess.server.dl;
 import java.util.*;
 public class MemberDAO
 {
+private List<MemberDTO> members;
+public MemberDAO()
+{
+members = new LinkedList<>();
+}
+public void addMember(MemberDTO member)
+{
+members.add(member);
+}
 public List<MemberDTO> getAll()
 {
-List<MemberDTO> members = new LinkedList<>();
 MemberDTO m = new MemberDTO();
 m.username = "Amit";
 m.password = "amit";
