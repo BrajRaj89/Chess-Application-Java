@@ -158,7 +158,6 @@ private void addListeners()
 t3 = new javax.swing.Timer(500,new ActionListener() {
 public void actionPerformed(ActionEvent ae)
 {
-System.out.println("got called timer t3");
 try
 {
 Object moveObject = client.execute("/ChessServer/getMove",username);
@@ -195,7 +194,6 @@ for (Message message : messages)
 {
 if(message.type==MESSAGE_TYPE.CHALLENGE)
 {
-invitationTableModel.addMessage(message,()->{
 try 
 {
 client.execute("/ChessServer/removeMessage",username,"Challenge");
@@ -203,11 +201,9 @@ client.execute("/ChessServer/removeMessage",username,"Challenge");
 {
 System.out.println("Exception occured "+ex.getMessage());
 }
-});
+invitationTableModel.addMessage(message);
 }else if(message.type==MESSAGE_TYPE.CHALLENGE_ACCEPTED)
 {
-startUI(message.fromUsername);
-availableUsersListModel.refreshUsersList();
 try 
 {
 client.execute("/ChessServer/removeMessage",username,"Accepted");
@@ -215,14 +211,10 @@ client.execute("/ChessServer/removeMessage",username,"Accepted");
 {
 //do nothing
 }
+startUI(message.fromUsername);
+availableUsersListModel.refreshUsersList();
 }else if(message.type==MESSAGE_TYPE.CHALLENGE_REJECTED)
 {
-JLabel messagLabel = new JLabel("Your invitation is rejected by user "+message.fromUsername);
-messagLabel.setFont(new Font("Century",Font.PLAIN,14));
-messagLabel.setBackground(Color.white);
-messagLabel.setForeground(new Color(0,51,102)); 
-JOptionPane.showMessageDialog(null,messagLabel);
-availableUsersListModel.refreshUsersList();
 try 
 {
 client.execute("/ChessServer/removeMessage",username,"Rejected");
@@ -230,6 +222,12 @@ client.execute("/ChessServer/removeMessage",username,"Rejected");
 {
 //do nothing
 }
+JLabel messagLabel = new JLabel("Your invitation is rejected by user "+message.fromUsername);
+messagLabel.setFont(new Font("Century",Font.PLAIN,14));
+messagLabel.setBackground(Color.white);
+messagLabel.setForeground(new Color(0,51,102)); 
+JOptionPane.showMessageDialog(null,messagLabel);
+availableUsersListModel.refreshUsersList();
 }else if(message.type==MESSAGE_TYPE.START_GAME) 
 {
 try 
@@ -309,7 +307,7 @@ client.execute("/ChessServer/removeMessage",username,"RRejected");
 }
 messageLabel = new JLabel("Request Rejected for Restart");
 messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null, messages, resultJson, ABORT);
+JOptionPane.showMessageDialog(null,messageLabel);
 }
 }//for loop ends 
 }// if ends
@@ -744,8 +742,6 @@ return button;
 }
 public Object getCellEditorValue()
 {
-//right now do nothing later on something to send required or call a callback 
-System.out.println("Button at cell :"+this.row+","+this.col+" clicked");
 return "Invited";
 }
 public boolean stopCellEditing()
@@ -758,9 +754,7 @@ public void fireEditingStopped()
 super.fireEditingStopped();
 }
 }
-
 // inner class
-
 class InvitationTableModel extends AbstractTableModel
 {
 private java.util.List<Message> messages = new ArrayList<>();
@@ -803,7 +797,7 @@ public void setValueAt(Object value,int row,int col)
 {
 // This method is not used in current button workflow
 }
-public void addMessage(Message msg,Runnable onExpire)
+public void addMessage(Message msg)
 {
 if(!messages.contains(msg))
 {
@@ -817,9 +811,9 @@ t2 = new javax.swing.Timer(50000,new ActionListener(){
 public void actionPerformed(ActionEvent ae)
 {
 removeMessage(msg);
+sendBackMessage(username,msg.fromUsername,"Rejected");
 }
 });
-onExpire.run();
 t2.setRepeats(false);
 t2.start();
 expiryTimer.put(msg,t2);
@@ -1559,5 +1553,4 @@ initializeBoard(boardPanel);
 }
 }    
 }
-
 }// outer class ends                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
