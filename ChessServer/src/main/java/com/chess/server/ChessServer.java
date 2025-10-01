@@ -134,6 +134,7 @@ if(tp.equals("EndGame")) type = MESSAGE_TYPE.END_GAME;
 if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
 if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
 if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
+if(tp.equals("LostMatch")) type=MESSAGE_TYPE.LOST_MATCH;
 System.out.println(type);
 System.out.println(username);
 try
@@ -170,6 +171,7 @@ if(tp.equals("EndGame")) type=MESSAGE_TYPE.END_GAME;
 if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
 if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
 if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
+if(tp.equals("LostMatch")) type=MESSAGE_TYPE.LOST_MATCH;
 Message msg = new Message();
 msg.fromUsername= fromUsername;
 msg.toUsername = toUsername;

@@ -66,7 +66,6 @@ messageLabel.setForeground(new Color(48,55,147));
 int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
-System.out.println("yes selected");
 String wdw = getTitle();
 if(wdw.equals("ChessBoard"))
 {
@@ -168,6 +167,7 @@ if(move!=null)
 chessBoard.updateBoard(move);
 if(move.captured)
 {
+JOptionPane.showMessageDialog(null,"Called from another client");
 chessBoard.addCapturedPiece(move.captureString, move.capturedByWhite);
 }
 t3.stop();
@@ -308,6 +308,9 @@ client.execute("/ChessServer/removeMessage",username,"RRejected");
 messageLabel = new JLabel("Request Rejected for Restart");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
+}else if(message.type==MESSAGE_TYPE.LOST_MATCH)
+{
+showResultUI(message.fromUsername,username,"Loss");
 }
 }//for loop ends 
 }// if ends
@@ -522,7 +525,7 @@ JPanel btnPanel = new JPanel();
 JButton cancelbtn = new JButton("Cancel");
 JButton startbtn = new JButton("Start");
 JTextArea messageArea = new JTextArea();
-messageArea.setText("Your invitation is accepted by the user "+opponent+"\nLet's Play Game!\nEnjoy the challenge!");
+messageArea.setText("Your invitation is accepted by user "+opponent+"\nLet's Play Game!\nEnjoy the challenge!");
 messageArea.setLineWrap(true);
 messageArea.setWrapStyleWord(true);
 messageArea.setEditable(false);
@@ -1079,11 +1082,11 @@ int x1 = move.fromX;
 int y1 = move.fromY;
 int x2 = move.toX;
 int y2 = move.toY;
-String movePiece = board[x1][y1];
-board[x2][y2] = movePiece;
 JButton btn1 = boardSquares[x1][y1];
 JButton btn2 = boardSquares[x2][y2];
 move(btn1,btn2);
+evaluateMove(btn1,btn2,board[x2][y2],board[x1][y1]);
+chessBoard.enableBoard();
 turn = (turn == 1) ? 2 : 1;
 if(turn==1)
 {
@@ -1092,13 +1095,9 @@ statusField.setText("White 's turn");
 else 
 {
 statusField.setText("Black 's turn");
-} 
+}
 boardPanel.revalidate();
 boardPanel.repaint();
-}
-public void updateCaptureBoard()
-{
-
 }
 private void initializeIconMap()
 {
@@ -1207,6 +1206,7 @@ JOptionPane.showMessageDialog(null,"Not your turn");
 return;
 }
 pressed1 = pressed;
+System.out.println("pressed 1 is "+x+","+y);
 }
 else
 {
@@ -1214,9 +1214,11 @@ int x1 = (int) pressed1.getClientProperty("row");
 int y1 = (int) pressed1.getClientProperty("col");
 if (pressed == pressed1)
 {
+JOptionPane.showMessageDialog(null,"Both button are same");
 pressed1 = null;
 return;
 }
+System.out.println("pressed 2 is "+x1+","+y1);
 int x2 = (int) pressed.getClientProperty("row");
 int y2 = (int) pressed.getClientProperty("col");
 
@@ -1225,14 +1227,10 @@ String capturedPiece = board[x2][y2];
 boolean isValidMove =false;
 if(movingPiece==null)
 {
+JOptionPane.showMessageDialog(null,"There is not piece to move");
 pressed1=null;
 return;
 }
-String currentPlayer =movingPiece;
-String opponentColor = (currentPlayer.substring(0,1)).equals("w")? "b" : "w";
-String opponentKing = opponentColor.equals("w") ? "wk.png" : "bk.png";
-String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
-
 if(capturedPiece != null && capturedPiece.startsWith(movingPiece.substring(0, 1)))
 {
 //castling
@@ -1247,6 +1245,7 @@ pressed1 = null;
 return;
 }else
 {
+    JOptionPane.showMessageDialog(null,"castling attempt");
 if(movingPiece.startsWith("b"))
 {
 if(movingPiece.equals(board[0][4])!=true)
@@ -1336,6 +1335,27 @@ messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
+move(pressed1, pressed);
+evaluateMove(pressed1, pressed, capturedPiece, movingPiece);
+chessBoard.disableBoard();
+if(capturedPiece!=null)
+{
+capturedByWhite = movingPiece.startsWith("w");
+captureString = capturedPiece;
+captured = true;
+JOptionPane.showMessageDialog(null,"called from evaluate move");
+addCapturedPiece(capturedPiece, capturedByWhite);
+}
+pressed1 = null;
+}
+}
+public void evaluateMove(JButton pressed1,JButton pressed,String capturedPiece,String movingPiece)
+{
+String currentPlayer =movingPiece;
+String opponentColor = (currentPlayer.substring(0,1)).equals("w")? "b" : "w";
+String opponentKing = opponentColor.equals("w") ? "wk.png" : "bk.png";
+String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
+
 ImageIcon imageIcon=null;
 String imageString=null;
 if(capturedPiece!=null)
@@ -1345,7 +1365,7 @@ int b= (int)pressed.getClientProperty("row");
 int c= (int)pressed.getClientProperty("col");
 imageString = board[b][c];
 }
-move(pressed1, pressed);
+
 String selected=null;
 String promotion=null;
 if(movingPiece.contains("p.png"))
@@ -1355,6 +1375,7 @@ if(color.equals("w"))
 {
 if(x2==0)
 {
+JOptionPane.showMessageDialog(null,"Promotion attempt");
 selected = showPromotionDialog();
 if(selected==null) promotion="wq.png";
 else if(selected.equals("Queen")) promotion="wq.png";
@@ -1368,6 +1389,7 @@ pressed.setIcon(iconMap.get(promotion));
 {
 if(x2==7)
 {
+JOptionPane.showMessageDialog(null,"Promotion attempt");
 selected = showPromotionDialog();
 if(selected==null) promotion="bq.png";
 else if(selected.equals("Queen")) promotion="bq.png";
@@ -1377,23 +1399,6 @@ else if(selected.equals("Knight")) promotion="bkt.png";
 board[x2][y2] = promotion;
 pressed.setIcon(iconMap.get(promotion));
 }
-}
-}
-if(capturedPiece!=null)
-{
-if(capturedPiece.equals("bk.png"))
-{
-messageLabel = new JLabel("Player White Wins! game ends");
-messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null,messageLabel);
-return;
-}
-else if(capturedPiece.equals("wk.png"))
-{
-messageLabel = new JLabel("Player Black Wins! game ends");
-messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null,messageLabel);
-return;
 }
 }
 //find and declare check
@@ -1419,14 +1424,6 @@ int j = (int)btn.getClientProperty("col");
 btn.setBackground(((l+j)%2==0)?Color.white:new Color(32,32,32));
 }
 }
-if(capturedPiece!=null)
-{
-capturedByWhite = movingPiece.startsWith("w");
-captureString = capturedPiece;
-captured = true;
-addCapturedPiece(capturedPiece, capturedByWhite);
-}
-
 int b1,b2;
 b1=b2=0;
 int w1,w2;
@@ -1473,11 +1470,14 @@ boolean isOCheck = ChessCheckDetector.isInCheck(board,opponentKing);
 boolean hasLegalMove = ChessCheckDetector.hasAnyLegalMove(board,opponentKing);
 if(isOCheck && !hasLegalMove)
 {
-String player = currentKing.equals("wk.png")?"White":"Black";
-messageLabel = new JLabel("Match ends "+player+" Wins");
-messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null,messageLabel);
-boardPanel.setEnabled(false);
+showResultUI(username,username2,"Won");
+try
+{
+client.execute("/ChessServer/setMessage",username,username2,"LostMatch");
+}catch(Exception e)
+{
+//do nothing 
+}
 pressed1=null;
 return;
 }else if(!isOCheck && !hasLegalMove)
@@ -1485,10 +1485,11 @@ return;
 messageLabel = new JLabel("Stalemate");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
-boardPanel.setEnabled(false);
+showHomeUI();
 }
 else if(isOCheck)
 {
+JOptionPane.showMessageDialog(null,"King in check");
 for(int i=0; i<=7;i++)
 {
 for(int j=0; j<=7; j++)
@@ -1507,7 +1508,26 @@ redBtns.add(pieceInAttack);
 }
 }
 }
-pressed1 = null;
+}
+public void disableBoard()
+{
+for(int i=0; i<8; i++)
+{
+for(int j=0; j<8; j++)
+{
+boardSquares[i][j].setEnabled(false);
+boardSquares[i][j].setDisabledIcon(boardSquares[i][j].getIcon());
+}
+}
+}
+public void enableBoard()
+{
+for(int i=0; i<8; i++)
+{
+for(int j=0; j<8; j++)
+{
+boardSquares[i][j].setEnabled(true);
+}
 }
 }
 public void move(JButton fromBtn, JButton toBtn)
@@ -1517,6 +1537,7 @@ int y1 = (int) fromBtn.getClientProperty("col");
 int x2 = (int) toBtn.getClientProperty("row");
 int y2 = (int) toBtn.getClientProperty("col");
 String movingPiece = board[x1][y1];
+board[x2][y2] = movingPiece;
 toBtn.setIcon(iconMap.get(movingPiece));
 fromBtn.setIcon(null);
 chessBoard.x1 = x1;
