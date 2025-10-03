@@ -94,7 +94,6 @@ message.type = MESSAGE_TYPE.CHALLENGE;
 List<Message> messages = inboxes.get(toUsername);
 if(messages==null)
 {
-System.out.println(message.fromUsername+","+message.toUsername);
 messages = new LinkedList<Message>();
 inboxes.put(toUsername,messages);
 }
@@ -157,7 +156,6 @@ System.out.println(e.getMessage()+"remove method");
 @Path("/setMessage")
 public void setMessage(String fromUsername,String toUsername,String tp)
 {
-System.out.println("set message got called");
 MESSAGE_TYPE type =null;
 if(tp.equals("Accepted")) type=MESSAGE_TYPE.CHALLENGE_ACCEPTED;
 if(tp.equals("Rejected")) type=MESSAGE_TYPE.CHALLENGE_REJECTED;
@@ -176,7 +174,6 @@ try
 List<Message> messages = inboxes.get(toUsername);
 if(messages==null)
 {
-System.out.println(msg.fromUsername+","+msg.toUsername);
 messages = new LinkedList<Message>();
 inboxes.put(msg.toUsername,messages);
 }
@@ -197,7 +194,6 @@ boolean flag = false;
 Game game = games.get(fromUser);
 String board[][] = game.board;
 String piece = board[move.fromX][move.fromY];
-System.out.println(piece);
 if(piece.contains("k.png"))
 {
 flag = ValidateMove.validateKing(move.fromX,move.fromX,move.toX,move.toY);

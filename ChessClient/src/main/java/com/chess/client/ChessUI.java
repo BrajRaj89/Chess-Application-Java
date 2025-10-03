@@ -169,7 +169,7 @@ if(move.captured)
 chessBoard.addCapturedPiece(move.captureString, move.capturedByWhite);
 }
 t3.stop();
-//chessBoard.submitBtn.setEnabled(true);
+chessBoard.submitBtn.setEnabled(true);
 }
 }catch(Exception e)
 {
@@ -1088,7 +1088,6 @@ initializeIconMap();
 }
 public void updateBoard(Move move)
 {
-System.out.println("updateBoard got called");
 try
 {
 int x1 = move.fromX;
@@ -1101,7 +1100,7 @@ JButton btn1 = boardSquares[x1][y1];
 JButton btn2 = boardSquares[x2][y2];
 if(move.castling)
 {
-doCastling(btn1, btn2, movString, capString);
+doCastling(btn1, btn2, movString, capString,x1,y1,x2,y2);
 }else
 {
 move(btn1,btn2);
@@ -1115,7 +1114,7 @@ btn2.setIcon(iconMap.get(move.promotionString));
 evaluateMove(btn1,btn2,movString,capString,x2,y2);
 }
 board[x1][y1]=null;
-// chessBoard.enableBoard(); 
+chessBoard.enableBoard(); 
 turn = (turn == 1) ? 2 : 1;
 if(turn==1)
 {
@@ -1127,7 +1126,6 @@ statusField.setText("Black 's turn");
 }
 boardPanel.revalidate();
 boardPanel.repaint();
-System.out.println("update Board ends ");
 }catch(Exception e)
 {
 JOptionPane.showMessageDialog(null, e.getMessage());
@@ -1314,7 +1312,7 @@ pressed1=null;
 return;
 }
 }
-doCastling(pressed1,pressed,movingPiece,capturedPiece);
+doCastling(pressed1,pressed,movingPiece,capturedPiece,x1,y1,x2,y2);
 Move move = new Move();
 move.fromX = x1;
 move.fromY = y1;
@@ -1324,7 +1322,6 @@ move.toUser = username2;
 move.castling = true;
 move.promotion=false;
 this.currentMove = move;
-System.out.println("Castling attempt");
 pressed1 = null;
 return;
 }
@@ -1355,8 +1352,8 @@ return;
 move(pressed1, pressed);
 evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
 board[x1][y1]=null;
-// chessBoard.disableBoard();
-// chessBoard.statusField.setText("Board Disabled Submit Move");
+ chessBoard.disableBoard();
+chessBoard.statusField.setText("Board Disabled Submit Move");
 Move move = new Move();
 move.fromX = x1;
 move.fromY = y1;
@@ -1391,7 +1388,7 @@ pressed1 = null;
 e.printStackTrace();
 }
 }
-public void doCastling(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece)
+public void doCastling(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece,int x1,int y1,int x2,int y2)
 {
 int direction = (y2>y1)?1:-1;
 for(int col = y1 + direction; col != y2; col += direction)
