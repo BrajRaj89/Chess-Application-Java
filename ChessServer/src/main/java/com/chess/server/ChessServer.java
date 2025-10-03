@@ -87,7 +87,6 @@ public void inviteUser(String fromUsername,String toUsername)
 {
 try
 {
-System.out.println("invite User got called");
 Message message = new Message();
 message.fromUsername = fromUsername;
 message.toUsername = toUsername;
@@ -124,7 +123,6 @@ return null;
 @Path("/removeMessage")
 public void removeMessage(String username,String tp)
 {
-System.out.println("remove message got called successfully");
 MESSAGE_TYPE type= null;
 if(tp.equals("Challenge")) type = MESSAGE_TYPE.CHALLENGE;
 if(tp.equals("Accepted")) type = MESSAGE_TYPE.CHALLENGE_ACCEPTED;
@@ -135,8 +133,6 @@ if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
 if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
 if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
 if(tp.equals("LostMatch")) type=MESSAGE_TYPE.LOST_MATCH;
-System.out.println(type);
-System.out.println(username);
 try
 {
 List<Message> messages = inboxes.get(username);
@@ -149,7 +145,6 @@ System.out.println(++count);
 if(message.type==type)
 {
 messages.remove(message);
-System.out.println("message removed successfully");
 break;
 }
 }
@@ -191,22 +186,13 @@ messages.add(msg);
 System.out.println(e.getMessage()+"set message");
 }
 }
-@Path("/getGameId")
-public String getGameId(String username)
-{
-return "abc";
-}
-@Path("/canIplay")
-public boolean canIplay(String gameId,String username)
-{
-return false;
-}
 @Path("/submitMove")
 public boolean submitMove(String fromUser,String moveString)
 {
+try
+{
 Gson gson = new Gson();
 Move move = gson.fromJson(moveString,Move.class);
-System.out.println("submit move got called");
 boolean flag = false;
 Game game = games.get(fromUser);
 String board[][] = game.board;
@@ -217,7 +203,6 @@ if(piece.contains("k.png"))
 flag = ValidateMove.validateKing(move.fromX,move.fromX,move.toX,move.toY);
 }else if(piece.contains("p.png"))
 {
-System.out.print("is pawn");
 boolean isWhite = piece.contains("w");
 boolean isCapturing = false;
 if(board[move.toX][move.toY]!=null) isCapturing =  true;
@@ -226,25 +211,28 @@ flag = ValidateMove.validatePawn(move.fromX,move.fromY,move.toX,move.toY,isWhite
 {
 flag = ValidateMove.validate(piece,move.fromX,move.fromY,move.toX,move.toY);
 }
-if(flag){
+flag = true;
+if(flag)
+{
 String pieceString = board[move.fromX][move.fromY];
 board[move.toX][move.toY] = pieceString;
-System.out.println(fromUser+" is putting move for "+move.toUser);
-System.out.println("ends here");
+board[move.fromX][move.fromY] = null;
 moves.put(move.toUser, move);
 return true;
 }
-System.out.println("ends  with false here ");
+}catch(Exception e)
+{
+System.out.println(e.getMessage());
+}
 return false;
 }
 @Path("/getMove")
 public Move getOpponentsMove(String username)
 {
-System.out.println("move got called from "+username);
 Move move = moves.get(username);
 if(move==null)
 {
-System.out.println("not found its move");
+return null;
 }
 moves.remove(username);
 return move;
@@ -252,7 +240,6 @@ return move;
 @Path("/shareBoard")
 public void shareBoard(String user1,String user2)
 {
-System.out.println("shareBoard got called");
 Game game = new Game();
 game.user1 = user1;
 game.user2 = user2;
@@ -265,18 +252,15 @@ game.board = board;
 games.put(user2,game);
 games.put(user1, game);
 moves = new HashMap<>();
-System.out.println("shareBoard completes here");
 }
 @Path("/getBoard")
 public String[][] getBoard(String username)
 {
-System.out.println("getBoard got called from "+username);
 Game game = games.get(username);
 if(game==null)
 {
 return null;
 }
-System.out.println("getBoard completes here");
 return game.board;
 }
 }

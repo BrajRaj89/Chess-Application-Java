@@ -1,4 +1,4 @@
-package com.chess.server;
+package com.chess.common;
 public class Move implements java.io.Serializable
 {
 public String toUser;
@@ -10,5 +10,7 @@ public int toY;
 public boolean captured;
 public String captureString;
 public boolean capturedByWhite;
-public boolean isLastMove;
+public boolean castling;
+public boolean promotion;
+public String promotionString;
 }

@@ -36,9 +36,7 @@ private Font messageFont;
 private ChessBoard chessBoard;
 private Gson gson;
 private boolean isSecond;
-private String captureString;
 private boolean capturedByWhite;
-private boolean captured;
 private Object boardObject;
 private String board[][];
 java.lang.reflect.Type listType;
@@ -69,6 +67,7 @@ if(selected==0)
 String wdw = getTitle();
 if(wdw.equals("ChessBoard"))
 {
+isSecond=false;
 showHomeUI();
 client.execute("/ChessServer/setMessage",username,username2,"EndGame");
 }else
@@ -167,11 +166,10 @@ if(move!=null)
 chessBoard.updateBoard(move);
 if(move.captured)
 {
-JOptionPane.showMessageDialog(null,"Called from another client");
 chessBoard.addCapturedPiece(move.captureString, move.capturedByWhite);
 }
 t3.stop();
-chessBoard.submitBtn.setEnabled(true);
+//chessBoard.submitBtn.setEnabled(true);
 }
 }catch(Exception e)
 {
@@ -905,6 +903,9 @@ private ArrayList<JButton> redBtns;
 public int x1,y1,x2,y2;
 public String[][] board;
 public JButton submitBtn;
+public Move currentMove;
+private boolean isPromotion;
+private String promotionString;
 public ChessBoard(String user1,String user2,String [][]board)
 {
 this.board =board;
@@ -947,22 +948,14 @@ submitBtn.addActionListener(_->{
 try
 {
 boolean flag = false;
-Move  move = new Move();
-move.fromX = x1;
-move.fromY = y1;
-move.toX = x2;
-move.toY = y2;
-move.toUser = user2;
-if(captured)
+if(currentMove==null)
 {
-move.captured  = true;
-move.captureString = captureString;
-move.capturedByWhite = capturedByWhite;
-}else
-{
-move.captured = false;
+messageLabel = new JLabel("No move yet");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
+return;
 }
-String moveString  = gson.toJson(move);
+String moveString  = gson.toJson(currentMove);
 flag = (boolean)client.execute("/ChessServer/submitMove",username,moveString);
 if(flag)
 {
@@ -978,10 +971,14 @@ statusField.setText("White 's turn");
 else 
 {
 statusField.setText("Black 's turn");
-} 
 }
-submitBtn.setEnabled(false);
+}else
+{
+JOptionPane.showMessageDialog(null,"Move not submitted ");
+}
+//submitBtn.setEnabled(false);
 t3.start();
+currentMove = null;
 }catch(Exception e)
 {
 System.out.println(e.getMessage());
@@ -1028,10 +1025,13 @@ btnPanel.add(cancelBtn);
 btnPanel.add(restartBtn);
 btnPanel.add(resignBtn);
 statusField = new JTextField("White 's turn");
-statusField.setPreferredSize(new Dimension(170, 28));
+statusField.addActionListener(_->{
+statusField.requestFocusInWindow();
+});
+statusField.setPreferredSize(new Dimension(290, 33));
 statusField.setEditable(false);
 statusField.setBackground(Color.white);
-Font inputFont = new Font("DialogInput", Font.BOLD, 16);
+Font inputFont = new Font("DialogInput", Font.PLAIN, 17);
 statusField.setFont(inputFont);
 statusField.setForeground(Color.RED);
 JLabel statusLabel = new JLabel("Status");
@@ -1059,7 +1059,6 @@ player1Name.setEditable(false);
 player1Name.setBackground(Color.white);
 player1Name.setPreferredSize(new Dimension(200, 24));
 player1Name.setFont(inputFont);
-player1Name.setText(user1);
 player1.add(playerL1);
 player1.add(player1Name);  
 player2.add(playerL2);
@@ -1067,26 +1066,56 @@ player2Name.setEditable(false);
 player2Name.setFont(inputFont);
 player2Name.setBackground(Color.white);
 player2Name.setPreferredSize(new Dimension(200, 24));
-player2Name.setText(user2);
 player2.add(player2Name);
+if(isSecond)
+{
+player1Name.setText(user2);
+player2Name.setText(user1);
+sidePanel.add(player1);
+sidePanel.add(capturePane);
+sidePanel.add(player2);
+}else
+{ 
+player1Name.setText(user1);
+player2Name.setText(user2);
 sidePanel.add(player2);
 sidePanel.add(capturePane);
 sidePanel.add(player1 );
+}
 sidePanel.add(statusPane);
 sidePanel.add(btnPanel);
 initializeIconMap();
 }
 public void updateBoard(Move move)
 {
+System.out.println("updateBoard got called");
+try
+{
 int x1 = move.fromX;
 int y1 = move.fromY;
 int x2 = move.toX;
 int y2 = move.toY;
+String movString = board[x1][y1];
+String capString = board[x2][y2];
 JButton btn1 = boardSquares[x1][y1];
 JButton btn2 = boardSquares[x2][y2];
+if(move.castling)
+{
+doCastling(btn1, btn2, movString, capString);
+}else
+{
 move(btn1,btn2);
-evaluateMove(btn1,btn2,board[x2][y2],board[x1][y1]);
-chessBoard.enableBoard();
+}
+if(move.promotion)
+{
+board[x2][y2] = move.promotionString;
+btn2.setIcon(iconMap.get(move.promotionString));
+}else
+{
+evaluateMove(btn1,btn2,movString,capString,x2,y2);
+}
+board[x1][y1]=null;
+// chessBoard.enableBoard(); 
 turn = (turn == 1) ? 2 : 1;
 if(turn==1)
 {
@@ -1098,6 +1127,11 @@ statusField.setText("Black 's turn");
 }
 boardPanel.revalidate();
 boardPanel.repaint();
+System.out.println("update Board ends ");
+}catch(Exception e)
+{
+JOptionPane.showMessageDialog(null, e.getMessage());
+}
 }
 private void initializeIconMap()
 {
@@ -1120,6 +1154,7 @@ piece.putClientProperty("row", i);
 piece.putClientProperty("col", j);
 piece.setBackground((i + j)%2==0?Color.WHITE:new Color(32,32,32));
 piece.setBorderPainted(false);
+piece.setFocusPainted(false);
 if(board[i][j] != null)
 {
 piece.setIcon(iconMap.get(board[i][j]));
@@ -1169,11 +1204,22 @@ whiteCaptured.setBorder(BorderFactory.createLineBorder(new Color(0, 86, 109)));
 whiteCaptured.setBackground(Color.WHITE);
 blackCaptured.setBorder(BorderFactory.createLineBorder(new Color(0, 86, 109)));
 blackCaptured.setBackground(Color.WHITE);
+if(isSecond)
+{
+capturePanel.add(whiteLabel);
+capturePanel.add(whiteCaptured);
+capturePanel.add(Box.createVerticalStrut(40));
+capturePanel.add(blackLabel);
+capturePanel.add(blackCaptured);
+}
+else
+{
 capturePanel.add(blackLabel);
 capturePanel.add(blackCaptured);
 capturePanel.add(Box.createVerticalStrut(40));
 capturePanel.add(whiteLabel);
 capturePanel.add(whiteCaptured);
+}
 capturePanel.setBackground(Color.WHITE);
 return capturePanel;
 }
@@ -1194,6 +1240,8 @@ capturePanel.repaint();
 }
 public void actionPerformed(ActionEvent ae)
 {
+try
+{
 JButton pressed = (JButton) ae.getSource();
 int x = (int) pressed.getClientProperty("row");
 int y = (int) pressed.getClientProperty("col");
@@ -1202,11 +1250,10 @@ if(pressed1 == null)
 if(board[x][y] == null) return;
 if((turn == 1 && !board[x][y].startsWith("w")) || (turn == 2 && !board[x][y].startsWith("b"))) 
 {
-JOptionPane.showMessageDialog(null,"Not your turn");
+JOptionPane.showMessageDialog(null,"Not your turn ");
 return;
 }
 pressed1 = pressed;
-System.out.println("pressed 1 is "+x+","+y);
 }
 else
 {
@@ -1214,20 +1261,17 @@ int x1 = (int) pressed1.getClientProperty("row");
 int y1 = (int) pressed1.getClientProperty("col");
 if (pressed == pressed1)
 {
-JOptionPane.showMessageDialog(null,"Both button are same");
 pressed1 = null;
 return;
 }
-System.out.println("pressed 2 is "+x1+","+y1);
+
 int x2 = (int) pressed.getClientProperty("row");
 int y2 = (int) pressed.getClientProperty("col");
-
 String movingPiece = board[x1][y1];
 String capturedPiece = board[x2][y2];
 boolean isValidMove =false;
 if(movingPiece==null)
 {
-JOptionPane.showMessageDialog(null,"There is not piece to move");
 pressed1=null;
 return;
 }
@@ -1245,7 +1289,6 @@ pressed1 = null;
 return;
 }else
 {
-    JOptionPane.showMessageDialog(null,"castling attempt");
 if(movingPiece.startsWith("b"))
 {
 if(movingPiece.equals(board[0][4])!=true)
@@ -1271,6 +1314,85 @@ pressed1=null;
 return;
 }
 }
+doCastling(pressed1,pressed,movingPiece,capturedPiece);
+Move move = new Move();
+move.fromX = x1;
+move.fromY = y1;
+move.toX = x2;
+move.toY = y2;
+move.toUser = username2;
+move.castling = true;
+move.promotion=false;
+this.currentMove = move;
+System.out.println("Castling attempt");
+pressed1 = null;
+return;
+}
+}
+if(movingPiece.substring(1).equals("k.png"))
+{
+isValidMove = ValidateMove.validateKing(x1,y1,x2,y2);
+}else if(movingPiece.substring(1).equals("p.png"))
+{
+String pawn = movingPiece.substring(0,2);
+boolean isCapturing = false;
+if(board[x2][y2]!=null) isCapturing =  true;
+boolean isWhite = pawn.equals("wp");
+isValidMove = ValidateMove.validatePawn(x1,y1,x2,y2,isWhite,isCapturing);
+}else
+{
+isValidMove = ValidateMove.validate(movingPiece,x1,y1,x2,y2);
+}
+if(!isValidMove)
+{
+pressed1 = null;
+Font messageFont  = new Font("Century",Font.BOLD,15);
+messageLabel = new JLabel("Not valid Move");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
+return;
+}
+move(pressed1, pressed);
+evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
+board[x1][y1]=null;
+// chessBoard.disableBoard();
+// chessBoard.statusField.setText("Board Disabled Submit Move");
+Move move = new Move();
+move.fromX = x1;
+move.fromY = y1;
+move.toX = x2;
+move.toY = y2;
+move.toUser = username2;
+if(capturedPiece!=null)
+{
+capturedByWhite = movingPiece.startsWith("w");
+addCapturedPiece(capturedPiece, capturedByWhite);
+move.captured  = true;
+move.captureString = capturedPiece;
+move.capturedByWhite = capturedByWhite;
+}else
+{
+move.captured = false;
+}
+if(isPromotion)
+{
+move.promotion = true;
+move.promotionString = promotionString;
+isPromotion=false;
+}else
+{
+move.promotion=false;
+}
+this.currentMove = move;
+pressed1 = null;
+}
+}catch(Exception e)
+{
+e.printStackTrace();
+}
+}
+public void doCastling(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece)
+{
 int direction = (y2>y1)?1:-1;
 for(int col = y1 + direction; col != y2; col += direction)
 {
@@ -1307,55 +1429,13 @@ p2.setIcon(iconMap.get(capturedPiece));
 }
 board[x1][y1] = null;
 board[x2][y2] = null;
-System.out.println("Castling attempt");
-pressed1 = null;
-return;
 }
-}
-if(movingPiece.substring(1).equals("k.png"))
-{
-isValidMove = ValidateMove.validateKing(x1,y1,x2,y2);
-}else if(movingPiece.substring(1).equals("p.png"))
-{
-String pawn = movingPiece.substring(0,2);
-boolean isCapturing = false;
-if(board[x2][y2]!=null) isCapturing =  true;
-boolean isWhite = pawn.equals("wp");
-isValidMove = ValidateMove.validatePawn(x1,y1,x2,y2,isWhite,isCapturing);
-}else
-{
-isValidMove = ValidateMove.validate(movingPiece,x1,y1,x2,y2);
-}
-if(!isValidMove)
-{
-pressed1 = null;
-Font messageFont  = new Font("Century",Font.BOLD,15);
-messageLabel = new JLabel("Not valid Move");
-messageLabel.setFont(messageFont);
-JOptionPane.showMessageDialog(null,messageLabel);
-return;
-}
-move(pressed1, pressed);
-evaluateMove(pressed1, pressed, capturedPiece, movingPiece);
-chessBoard.disableBoard();
-if(capturedPiece!=null)
-{
-capturedByWhite = movingPiece.startsWith("w");
-captureString = capturedPiece;
-captured = true;
-JOptionPane.showMessageDialog(null,"called from evaluate move");
-addCapturedPiece(capturedPiece, capturedByWhite);
-}
-pressed1 = null;
-}
-}
-public void evaluateMove(JButton pressed1,JButton pressed,String capturedPiece,String movingPiece)
+public void evaluateMove(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece,int x,int y)
 {
 String currentPlayer =movingPiece;
 String opponentColor = (currentPlayer.substring(0,1)).equals("w")? "b" : "w";
 String opponentKing = opponentColor.equals("w") ? "wk.png" : "bk.png";
 String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
-
 ImageIcon imageIcon=null;
 String imageString=null;
 if(capturedPiece!=null)
@@ -1365,7 +1445,6 @@ int b= (int)pressed.getClientProperty("row");
 int c= (int)pressed.getClientProperty("col");
 imageString = board[b][c];
 }
-
 String selected=null;
 String promotion=null;
 if(movingPiece.contains("p.png"))
@@ -1373,35 +1452,36 @@ if(movingPiece.contains("p.png"))
 String color = (movingPiece.equals("bp.png"))?"b":"w";
 if(color.equals("w"))
 {
-if(x2==0)
+if(x==0)
 {
-JOptionPane.showMessageDialog(null,"Promotion attempt");
 selected = showPromotionDialog();
 if(selected==null) promotion="wq.png";
 else if(selected.equals("Queen")) promotion="wq.png";
 else if(selected.equals("Bishop")) promotion="wb.png";
 else if(selected.equals("Rook")) promotion="wr.png";
 else if(selected.equals("Knight")) promotion="wkt.png";
-board[x2][y2] = promotion;
+board[x][y] = promotion;
+isPromotion=true;
+promotionString = promotion;
 pressed.setIcon(iconMap.get(promotion));
 }
 }else
 {
-if(x2==7)
+if(x==7)
 {
-JOptionPane.showMessageDialog(null,"Promotion attempt");
 selected = showPromotionDialog();
 if(selected==null) promotion="bq.png";
 else if(selected.equals("Queen")) promotion="bq.png";
 else if(selected.equals("Bishop")) promotion="bb.png";
 else if(selected.equals("Rook")) promotion="br.png";
 else if(selected.equals("Knight")) promotion="bkt.png";
-board[x2][y2] = promotion;
+board[x][y] = promotion;
+isPromotion=true;
+promotionString = promotion;
 pressed.setIcon(iconMap.get(promotion));
 }
 }
 }
-//find and declare check
 boolean isCcheck = ChessCheckDetector.isInCheck(board,currentKing);
 if(isCcheck)
 {
@@ -1489,7 +1569,6 @@ showHomeUI();
 }
 else if(isOCheck)
 {
-JOptionPane.showMessageDialog(null,"King in check");
 for(int i=0; i<=7;i++)
 {
 for(int j=0; j<=7; j++)
@@ -1540,10 +1619,6 @@ String movingPiece = board[x1][y1];
 board[x2][y2] = movingPiece;
 toBtn.setIcon(iconMap.get(movingPiece));
 fromBtn.setIcon(null);
-chessBoard.x1 = x1;
-chessBoard.y1 = y1;
-chessBoard.x2 = x2;
-chessBoard.y2 = y2;
 }
 public String showPromotionDialog()
 {
@@ -1572,6 +1647,7 @@ initializeBoard2(boardPanel);
 {
 initializeBoard(boardPanel);
 }
+capturePane = setupCapturedPanel();
 }    
 }
 }// outer class ends                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
