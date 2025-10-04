@@ -68,17 +68,14 @@ String wdw = getTitle();
 if(wdw.equals("ChessBoard"))
 {
 isSecond=false;
+username2 =null;
 showHomeUI();
 client.execute("/ChessServer/setMessage",username,username2,"EndGame");
 }else
 {
-System.out.println("logout");
 client.execute("/ChessServer/logout",username);
 System.exit(0);
 }
-}else
-{
-System.out.println("not selected");
 }
 }catch(Throwable t)
 {
@@ -309,6 +306,13 @@ JOptionPane.showMessageDialog(null,messageLabel);
 }else if(message.type==MESSAGE_TYPE.LOST_MATCH)
 {
 showResultUI(message.fromUsername,username,"Loss");
+}else if(message.type==MESSAGE_TYPE.STALEMATE)
+{
+
+messageLabel = new JLabel("Stalemate");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
+showHomeUI();
 }
 }//for loop ends 
 }// if ends
@@ -976,7 +980,7 @@ statusField.setText("Black 's turn");
 {
 JOptionPane.showMessageDialog(null,"Move not submitted ");
 }
-//submitBtn.setEnabled(false);
+submitBtn.setEnabled(false);
 t3.start();
 currentMove = null;
 }catch(Exception e)
@@ -1350,9 +1354,10 @@ JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
 move(pressed1, pressed);
-evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
+boolean hasCompleted = evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
+if(!hasCompleted) return;
 board[x1][y1]=null;
- chessBoard.disableBoard();
+chessBoard.disableBoard();
 chessBoard.statusField.setText("Board Disabled Submit Move");
 Move move = new Move();
 move.fromX = x1;
@@ -1427,7 +1432,7 @@ p2.setIcon(iconMap.get(capturedPiece));
 board[x1][y1] = null;
 board[x2][y2] = null;
 }
-public void evaluateMove(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece,int x,int y)
+public boolean evaluateMove(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece,int x,int y)
 {
 String currentPlayer =movingPiece;
 String opponentColor = (currentPlayer.substring(0,1)).equals("w")? "b" : "w";
@@ -1491,7 +1496,7 @@ int b= (int)pressed.getClientProperty("row");
 int c= (int)pressed.getClientProperty("col");
 board[b][c] = imageString;
 pressed1 = null;
-return;
+return false;
 }else
 {
 for(JButton btn:redBtns)
@@ -1540,7 +1545,7 @@ int b= (int)pressed.getClientProperty("row");
 int c= (int)pressed.getClientProperty("col");
 board[b][c] = imageString;
 pressed1 = null;
-return;
+return false;
 }
 }
 boolean isOCheck = ChessCheckDetector.isInCheck(board,opponentKing);
@@ -1556,11 +1561,18 @@ client.execute("/ChessServer/setMessage",username,username2,"LostMatch");
 //do nothing 
 }
 pressed1=null;
-return;
+return false;
 }else if(!isOCheck && !hasLegalMove)
 {
 messageLabel = new JLabel("Stalemate");
 messageLabel.setFont(messageFont);
+try
+{
+client.execute("/ChessServer/setMessage",username,username2,"Stalemate");
+}catch(Exception e)
+{
+//do nothing
+}
 JOptionPane.showMessageDialog(null,messageLabel);
 showHomeUI();
 }
@@ -1584,6 +1596,7 @@ redBtns.add(pieceInAttack);
 }
 }
 }
+return true;
 }
 public void disableBoard()
 {
@@ -1602,7 +1615,10 @@ for(int i=0; i<8; i++)
 {
 for(int j=0; j<8; j++)
 {
-boardSquares[i][j].setEnabled(true);
+JButton btn = boardSquares[i][j];
+btn.setEnabled(true);
+btn.setBorderPainted(false);
+btn.setFocusPainted(false);
 }
 }
 }
@@ -1644,7 +1660,12 @@ initializeBoard2(boardPanel);
 {
 initializeBoard(boardPanel);
 }
-capturePane = setupCapturedPanel();
+resetCapturedBoard();
+}
+public void resetCapturedBoard()
+{
+whiteCaptured.removeAll();
+blackCaptured.removeAll();
 }    
 }
 }// outer class ends                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  

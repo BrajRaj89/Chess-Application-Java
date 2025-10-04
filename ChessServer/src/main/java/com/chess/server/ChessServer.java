@@ -140,7 +140,6 @@ if(messages!=null)
 int count =0;
 for(Message message:messages)
 {
-System.out.println(++count);
 if(message.type==type)
 {
 messages.remove(message);
