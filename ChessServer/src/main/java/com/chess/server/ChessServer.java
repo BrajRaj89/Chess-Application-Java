@@ -3,6 +3,9 @@ import com.chess.server.dl.*;
 import com.chess.common.*;
 import com.nframework.server.annotations.*;
 import java.util.*;
+
+import javax.swing.JButton;
+
 import com.google.gson.*;
 import com.chess.server.board.*;
 
@@ -132,12 +135,12 @@ if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
 if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
 if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
 if(tp.equals("LostMatch")) type=MESSAGE_TYPE.LOST_MATCH;
+if(tp.equals("Stalemate")) type=MESSAGE_TYPE.STALEMATE;
 try
 {
 List<Message> messages = inboxes.get(username);
 if(messages!=null)
 {
-int count =0;
 for(Message message:messages)
 {
 if(message.type==type)
@@ -164,6 +167,7 @@ if(tp.equals("Restart")) type=MESSAGE_TYPE.RESTART;
 if(tp.equals("RAccepted")) type=MESSAGE_TYPE.RESTART_ACCEPTED;
 if(tp.equals("RRejected")) type=MESSAGE_TYPE.RESTART_REJECTED;
 if(tp.equals("LostMatch")) type=MESSAGE_TYPE.LOST_MATCH;
+if(tp.equals("Stalemate")) type=MESSAGE_TYPE.STALEMATE;
 Message msg = new Message();
 msg.fromUsername= fromUsername;
 msg.toUsername = toUsername;
@@ -185,13 +189,13 @@ System.out.println(e.getMessage()+"set message");
 @Path("/submitMove")
 public boolean submitMove(String fromUser,String moveString)
 {
-try
-{
 Gson gson = new Gson();
 Move move = gson.fromJson(moveString,Move.class);
-boolean flag = false;
 Game game = games.get(fromUser);
 String board[][] = game.board;
+try
+{
+boolean flag = false;
 String piece = board[move.fromX][move.fromY];
 if(piece.contains("k.png"))
 {
@@ -210,15 +214,53 @@ flag = true;
 if(flag)
 {
 String pieceString = board[move.fromX][move.fromY];
+if(move.castling)
+{
+int x1 = move.fromX;
+int y1 = move.fromY;
+int x2 = move.toX;
+int y2 = move.toY;
+int direction = (y2>y1)?1:-1;
+for(int col = y1 + direction; col != y2; col += direction)
+{
+String ps= board[x1][col];
+if(ps!=null)
+{
+return false;
+}
+}
+if(direction == 1) 
+{
+board[x1][y1+2] = pieceString; 
+board[x1][y1+1] = move.captureString; 
+}
+else
+{
+board[x1][y1-2] = pieceString;
+board[x1][y1-1] = move.captureString; 
+}
+board[x1][y1] = null;
+board[x2][y2] = null;
+}else if(move.promotion)
+{
+board[move.toX][move.toY] = move.promotionString;
+board[move.fromX][move.fromY] = null;
+}
+else
+{
 board[move.toX][move.toY] = pieceString;
 board[move.fromX][move.fromY] = null;
+}
 moves.put(move.toUser, move);
 return true;
 }
+System.out.println("x1-"+move.fromX+"y1-"+move.fromY+"x2-"+move.toX+"y2-"+move.toY);
+System.out.println("moving piece "+board[move.fromX][move.fromY]+"captured piece "+board[move.toX][move.toY]);
 }catch(Exception e)
 {
 System.out.println(e.getMessage());
 }
+System.out.println("moving piece "+board[move.fromX][move.fromY]+"capture piece "+board[move.toX][move.toY]);
 return false;
 }
 @Path("/getMove")

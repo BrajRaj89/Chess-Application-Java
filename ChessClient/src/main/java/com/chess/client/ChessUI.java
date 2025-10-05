@@ -67,10 +67,15 @@ if(selected==0)
 String wdw = getTitle();
 if(wdw.equals("ChessBoard"))
 {
+try
+{
 isSecond=false;
-username2 =null;
 showHomeUI();
 client.execute("/ChessServer/setMessage",username,username2,"EndGame");
+}catch(Exception ee)
+{ 
+System.out.println("printing the error message--------------------------"+ee.getMessage());
+}
 }else
 {
 client.execute("/ChessServer/logout",username);
@@ -308,7 +313,6 @@ JOptionPane.showMessageDialog(null,messageLabel);
 showResultUI(message.fromUsername,username,"Loss");
 }else if(message.type==MESSAGE_TYPE.STALEMATE)
 {
-
 messageLabel = new JLabel("Stalemate");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
@@ -330,8 +334,8 @@ timer.stop();
 try
 {
 @SuppressWarnings("unchecked")
-java.util.List<String> users =(java.util.List<String>)client.execute("/ChessServer/getMembers",username);
-ChessUI.this.availableUsersListModel.setUsers(users);
+java.util.List<String> members =(java.util.List<String>)client.execute("/ChessServer/getMembers",username);
+ChessUI.this.availableUsersListModel.setUsers(members);
 timer.start();
 }catch(Throwable t)
 {
@@ -369,6 +373,7 @@ container.setLayout(null);
 }
 public void showResultUI(String winner,String losser,String rst)
 {
+isSecond=false;
 hideUI();
 setTitle(username);
 JLabel heading = new JLabel("Result");
@@ -613,7 +618,7 @@ System.out.println("getting error "+t.getMessage());
 String resultJson = gson.toJson(boardObject,Object.class);
 java.lang.reflect.Type listType = new TypeToken<String [][]>() {}.getType();
 board = gson.fromJson(resultJson, listType);
-chessBoard = new ChessBoard(username1, username2,board);
+chessBoard = new ChessBoard(username1,username2,board);
 if(isSecond)
 {
 chessBoard.initializeBoard2(chessBoard.boardPanel);
@@ -629,14 +634,10 @@ container.add(chessBoard.sidePanel);
 container.revalidate();
 container.repaint();
 }
-public void rematch()
-{
-
-}
 //inner classes starts here 
 class AvailableUsersListModel extends AbstractTableModel
 {
-private java.util.List<String> users;
+private java.util.List<String> members;
 private String title[] = {"Users"," "};
 private java.util.List<JButton> inviteButtons;
 private boolean awaitingInvitationReply;
@@ -644,11 +645,11 @@ AvailableUsersListModel()
 {
 awaitingInvitationReply = false;
 inviteButtons = new LinkedList<>();
-users = new LinkedList<>();
+members = new LinkedList<>();
 }
 public int getRowCount()
 {
-return this.users.size();
+return this.members.size();
 }
 public int getColumnCount()
 {
@@ -660,7 +661,7 @@ return title[columnIndex];
 }
 public Object getValueAt(int row,int column)
 {
-if(column==0) return this.users.get(row);
+if(column==0) return this.members.get(row);
 return this.inviteButtons.get(row);
 }
 public boolean isCellEditable(int r,int c)
@@ -673,12 +674,12 @@ public Class<?> getColumnClass(int c)
 if(c==0) return String.class;
 return JButton.class;
 }
-public void setUsers(java.util.List<String> users)
+public void setUsers(java.util.List<String> members)
 {
 if(awaitingInvitationReply) return;
-this.users = users;
+this.members = members;
 this.inviteButtons.clear();
-for(int i=0; i<this.users.size(); i++) this.inviteButtons.add(new JButton("Invite"));
+for(int i=0; i<this.members.size(); i++) this.inviteButtons.add(new JButton("Invite"));
 fireTableDataChanged();
 }
 public void setValueAt(Object data,int row,int col)
@@ -693,7 +694,7 @@ if(text.equalsIgnoreCase("Invited"))
 {
 awaitingInvitationReply = true;
 for(JButton inviteButton:inviteButtons) inviteButton.setEnabled(false);
-ChessUI.this.sendInvitation(this.users.get(row));
+ChessUI.this.sendInvitation(this.members.get(row));
 this.fireTableDataChanged();
 }
 else if(text.equalsIgnoreCase("Invite"))
@@ -706,7 +707,7 @@ this.fireTableDataChanged();
 }
 public void refreshUsersList()
 {
-this.users.clear();
+this.members.clear();
 this.fireTableDataChanged();
 this.awaitingInvitationReply= false;
 }
@@ -979,6 +980,7 @@ statusField.setText("Black 's turn");
 }else
 {
 JOptionPane.showMessageDialog(null,"Move not submitted ");
+System.out.println("x1 "+currentMove.fromX+"y1 "+currentMove.fromY+"x2 "+currentMove.toX+"y2 "+currentMove.toY);
 }
 submitBtn.setEnabled(false);
 t3.start();
@@ -1014,6 +1016,7 @@ messageLabel.setForeground(new Color(48,55,147));
 int selected = JOptionPane.showConfirmDialog(null,messageLabel,"Select",JOptionPane.YES_NO_OPTION);
 if(selected==0)
 {
+isSecond=false;
 showHomeUI();
 try
 {
@@ -1266,7 +1269,6 @@ if (pressed == pressed1)
 pressed1 = null;
 return;
 }
-
 int x2 = (int) pressed.getClientProperty("row");
 int y2 = (int) pressed.getClientProperty("col");
 String movingPiece = board[x1][y1];
@@ -1324,6 +1326,8 @@ move.toX = x2;
 move.toY = y2;
 move.toUser = username2;
 move.castling = true;
+move.captured=true;
+move.captureString =capturedPiece;
 move.promotion=false;
 this.currentMove = move;
 pressed1 = null;
@@ -1355,7 +1359,11 @@ return;
 }
 move(pressed1, pressed);
 boolean hasCompleted = evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
-if(!hasCompleted) return;
+if(!hasCompleted)
+{
+pressed1=null;
+return;
+}
 board[x1][y1]=null;
 chessBoard.disableBoard();
 chessBoard.statusField.setText("Board Disabled Submit Move");
@@ -1578,6 +1586,7 @@ showHomeUI();
 }
 else if(isOCheck)
 {
+JOptionPane.showMessageDialog(null,"King in check "+currentKing);
 for(int i=0; i<=7;i++)
 {
 for(int j=0; j<=7; j++)
