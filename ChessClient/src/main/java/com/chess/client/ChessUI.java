@@ -911,6 +911,7 @@ public JButton submitBtn;
 public Move currentMove;
 private boolean isPromotion;
 private String promotionString;
+private String captureString;
 public ChessBoard(String user1,String user2,String [][]board)
 {
 this.board =board;
@@ -1440,26 +1441,17 @@ p2.setIcon(iconMap.get(capturedPiece));
 board[x1][y1] = null;
 board[x2][y2] = null;
 }
-public boolean evaluateMove(JButton pressed1,JButton pressed,String movingPiece,String capturedPiece,int x,int y)
+public boolean evaluateMove(JButton pressed1,JButton pressed,String movingString,String capturedString,int x,int y)
 {
-String currentPlayer =movingPiece;
+String currentPlayer =movingString;
 String opponentColor = (currentPlayer.substring(0,1)).equals("w")? "b" : "w";
 String opponentKing = opponentColor.equals("w") ? "wk.png" : "bk.png";
 String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
-ImageIcon imageIcon=null;
-String imageString=null;
-if(capturedPiece!=null)
-{
-imageIcon = (ImageIcon)pressed.getIcon();
-int b= (int)pressed.getClientProperty("row");
-int c= (int)pressed.getClientProperty("col");
-imageString = board[b][c];
-}
 String selected=null;
 String promotion=null;
-if(movingPiece.contains("p.png"))
+if(movingString.contains("p.png"))
 {
-String color = (movingPiece.equals("bp.png"))?"b":"w";
+String color = (movingString.equals("bp.png"))?"b":"w";
 if(color.equals("w"))
 {
 if(x==0)
@@ -1498,11 +1490,12 @@ if(isCcheck)
 messageLabel = new JLabel("Invalid Move");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
+//done done
 move(pressed,pressed1);
-pressed.setIcon(imageIcon);
+pressed.setIcon(iconMap.get(capturedString));
 int b= (int)pressed.getClientProperty("row");
 int c= (int)pressed.getClientProperty("col");
-board[b][c] = imageString;
+board[b][c] = capturedString;
 pressed1 = null;
 return false;
 }else
@@ -1548,10 +1541,10 @@ messageLabel = new JLabel("Wrong king position");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 move(pressed,pressed1);
-pressed.setIcon(imageIcon);
+pressed.setIcon(iconMap.get(capturedString));
 int b= (int)pressed.getClientProperty("row");
 int c= (int)pressed.getClientProperty("col");
-board[b][c] = imageString;
+board[b][c] = capturedString;
 pressed1 = null;
 return false;
 }
