@@ -213,6 +213,7 @@ for(int j=0; j<8; j++)
 {
 if(board[i][j]!=null && board[i][j].equals(king))
 {
+System.out.println("king position is "+i+","+j);
 x1 = i;
 y1 = j;
 flag = true;

@@ -33,6 +33,7 @@ private JPanel panel3;
 private JLabel messageLabel;
 private int w,h,cw,ch;
 private Font messageFont;
+private Font messageFont2;
 private ChessBoard chessBoard;
 private Gson gson;
 private boolean isSecond;
@@ -94,6 +95,7 @@ private void initComponents()
 isSecond = false;
 gson = new Gson();
 messageFont = new Font("monospaced",Font.BOLD,16);
+messageFont2  = new Font("Century",Font.BOLD,15);
 panel1 = new JPanel();
 panel1.setLayout(new BorderLayout());
 Font headFont = new Font("Californian FB",Font.BOLD,16);
@@ -313,6 +315,13 @@ JOptionPane.showMessageDialog(null,messageLabel);
 showResultUI(message.fromUsername,username,"Loss");
 }else if(message.type==MESSAGE_TYPE.STALEMATE)
 {
+try
+{
+client.execute("/ChessServer/removeMessage",username,"Stalemate");
+}catch(Exception e)
+{
+//do nothing
+}
 messageLabel = new JLabel("Stalemate");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
@@ -1117,10 +1126,8 @@ if(move.promotion)
 {
 board[x2][y2] = move.promotionString;
 btn2.setIcon(iconMap.get(move.promotionString));
-}else
-{
-evaluateMove(btn1,btn2,movString,capString,x2,y2);
 }
+evaluateMove(btn1,btn2,movString,capString,x2,y2);
 board[x1][y1]=null;
 chessBoard.enableBoard(); 
 turn = (turn == 1) ? 2 : 1;
@@ -1274,15 +1281,14 @@ int x2 = (int) pressed.getClientProperty("row");
 int y2 = (int) pressed.getClientProperty("col");
 String movingPiece = board[x1][y1];
 String capturedPiece = board[x2][y2];
-boolean isValidMove =false;
 if(movingPiece==null)
 {
 pressed1=null;
 return;
 }
+boolean isValidMove =false;
 if(capturedPiece != null && capturedPiece.startsWith(movingPiece.substring(0, 1)))
 {
-//castling
 String piece1 = movingPiece.substring(1);
 String piece2 = capturedPiece.substring(1);
 boolean isCastling = false;
@@ -1352,11 +1358,75 @@ isValidMove = ValidateMove.validate(movingPiece,x1,y1,x2,y2);
 if(!isValidMove)
 {
 pressed1 = null;
-Font messageFont  = new Font("Century",Font.BOLD,15);
 messageLabel = new JLabel("Not valid Move");
-messageLabel.setFont(messageFont);
+messageLabel.setFont(messageFont2);
 JOptionPane.showMessageDialog(null,messageLabel);
 return;
+}
+if(!movingPiece.contains("kt.png"))
+{
+if ( y1 == y2)
+{
+int step = (x2 > x1) ? 1 : -1; 
+for(int i = x1 + step; i != x2; i += step)
+{
+if(board[i][y1] != null)
+{
+messageLabel = new JLabel("Cannot move over another piece");
+messageLabel.setFont(messageFont2);
+JOptionPane.showMessageDialog(null,messageLabel);
+pressed1 = null;
+return;
+}
+}
+}else if( x1 == x2)
+{
+int step = (y2 > y1) ? 1 : -1; 
+for(int i = y1 + step; i != y2; i += step)
+{
+if(board[x1][i] != null)
+{
+messageLabel = new JLabel("Cannot move over another piece");
+messageLabel.setFont(messageFont2);
+JOptionPane.showMessageDialog(null,messageLabel);
+pressed1 = null;
+return;
+}
+}
+}else if((x1<x2 && y1<y2)||(x1>x2 && y1>y2))
+{
+int step = (y2 > y1) ? 1 : -1;
+int j=x1+step;
+for(int i = y1 + step; i != y2; i += step)
+{
+if(board[j][i] != null)
+{
+messageLabel = new JLabel("Cannot move over another piece");
+messageLabel.setFont(messageFont2);
+JOptionPane.showMessageDialog(null,messageLabel);
+pressed1 = null;
+return;
+}
+j = j+step;
+}
+}else if((x1<x2 && y1>y2)||(x1>x2 && y1<y2))
+{
+int step = (x2 > x1) ? 1 : -1; 
+int step2 = (step==-1)?1:-1;
+int j = y1+step2;
+for(int i=x1+step; i!=x2; i+=step)
+{
+if(board[i][j] != null)
+{
+messageLabel = new JLabel("Cannot move over another piece");
+messageLabel.setFont(messageFont2);
+JOptionPane.showMessageDialog(null,messageLabel);
+pressed1 = null;
+return;
+}
+j+=step2;
+}
+}
 }
 move(pressed1, pressed);
 boolean hasCompleted = evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
@@ -1385,6 +1455,43 @@ move.capturedByWhite = capturedByWhite;
 {
 move.captured = false;
 }
+String selected=null;
+String promotion=null;
+if(movingPiece.contains("p.png"))
+{
+String color = (movingPiece.equals("bp.png"))?"b":"w";
+if(color.equals("w"))
+{
+if(x==0)
+{
+selected = showPromotionDialog();
+if(selected==null) promotion="wq.png";
+else if(selected.equals("Queen")) promotion="wq.png";
+else if(selected.equals("Bishop")) promotion="wb.png";
+else if(selected.equals("Rook")) promotion="wr.png";
+else if(selected.equals("Knight")) promotion="wkt.png";
+board[x][y] = promotion;
+isPromotion=true;
+promotionString = promotion;
+pressed.setIcon(iconMap.get(promotion));
+}
+}else
+{
+if(x==7)
+{
+selected = showPromotionDialog();
+if(selected==null) promotion="bq.png";
+else if(selected.equals("Queen")) promotion="bq.png";
+else if(selected.equals("Bishop")) promotion="bb.png";
+else if(selected.equals("Rook")) promotion="br.png";
+else if(selected.equals("Knight")) promotion="bkt.png";
+board[x][y] = promotion;
+isPromotion=true;
+promotionString = promotion;
+pressed.setIcon(iconMap.get(promotion));
+}
+}
+}
 if(isPromotion)
 {
 move.promotion = true;
@@ -1397,6 +1504,7 @@ move.promotion=false;
 this.currentMove = move;
 pressed1 = null;
 }
+
 }catch(Exception e)
 {
 e.printStackTrace();
@@ -1447,50 +1555,12 @@ String currentPlayer =movingString;
 String opponentColor = (currentPlayer.substring(0,1)).equals("w")? "b" : "w";
 String opponentKing = opponentColor.equals("w") ? "wk.png" : "bk.png";
 String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
-String selected=null;
-String promotion=null;
-if(movingString.contains("p.png"))
-{
-String color = (movingString.equals("bp.png"))?"b":"w";
-if(color.equals("w"))
-{
-if(x==0)
-{
-selected = showPromotionDialog();
-if(selected==null) promotion="wq.png";
-else if(selected.equals("Queen")) promotion="wq.png";
-else if(selected.equals("Bishop")) promotion="wb.png";
-else if(selected.equals("Rook")) promotion="wr.png";
-else if(selected.equals("Knight")) promotion="wkt.png";
-board[x][y] = promotion;
-isPromotion=true;
-promotionString = promotion;
-pressed.setIcon(iconMap.get(promotion));
-}
-}else
-{
-if(x==7)
-{
-selected = showPromotionDialog();
-if(selected==null) promotion="bq.png";
-else if(selected.equals("Queen")) promotion="bq.png";
-else if(selected.equals("Bishop")) promotion="bb.png";
-else if(selected.equals("Rook")) promotion="br.png";
-else if(selected.equals("Knight")) promotion="bkt.png";
-board[x][y] = promotion;
-isPromotion=true;
-promotionString = promotion;
-pressed.setIcon(iconMap.get(promotion));
-}
-}
-}
 boolean isCcheck = ChessCheckDetector.isInCheck(board,currentKing);
 if(isCcheck)
 {
 messageLabel = new JLabel("Invalid Move");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
-//done done
 move(pressed,pressed1);
 pressed.setIcon(iconMap.get(capturedString));
 int b= (int)pressed.getClientProperty("row");
@@ -1579,7 +1649,6 @@ showHomeUI();
 }
 else if(isOCheck)
 {
-JOptionPane.showMessageDialog(null,"King in check "+currentKing);
 for(int i=0; i<=7;i++)
 {
 for(int j=0; j<=7; j++)
