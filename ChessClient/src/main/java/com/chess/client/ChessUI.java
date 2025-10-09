@@ -639,6 +639,8 @@ Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 setSize(screenSize.width,screenSize.height-41);
 setLocation(0,0);
 container.add(chessBoard.boardPanel);
+container.add(chessBoard.hrPanel);
+container.add(chessBoard.vrPanel);
 container.add(chessBoard.sidePanel);
 container.revalidate();
 container.repaint();
@@ -920,7 +922,8 @@ public JButton submitBtn;
 public Move currentMove;
 private boolean isPromotion;
 private String promotionString;
-private String captureString;
+private JPanel hrPanel;
+private JPanel vrPanel;
 public ChessBoard(String user1,String user2,String [][]board)
 {
 this.board =board;
@@ -933,12 +936,19 @@ iconMap = new HashMap<>();
 setTitle("ChessBoard");
 boardPanel = new JPanel(new GridLayout(8, 8));
 Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+hrPanel = new JPanel();
+vrPanel = new JPanel();
+hrPanel.setLayout(new BoxLayout(hrPanel,BoxLayout.X_AXIS));
+vrPanel.setLayout(new BoxLayout(vrPanel,BoxLayout.Y_AXIS));
+hrPanel.setBounds(0,d.height-103,d.width-456,16);
+vrPanel.setBounds(0,2,11,d.height-63);
+initializeH(hrPanel, vrPanel);
 setSize(d.width, d.height);
-Border border = new LineBorder(new Color(0, 86, 109), 1);
+Border border = new LineBorder(new Color(0, 86, 109),1);
 boardPanel.setBorder(border);
-boardPanel.setBounds(2, 2, d.width - 458, d.height - 83);
+boardPanel.setBounds(11, 2, d.width -456, d.height -103);
 sidePanel = new JPanel();
-sidePanel.setBounds(d.width - 457, 2, 440, d.height - 83);
+sidePanel.setBounds(d.width - 446, 2, 430, d.height - 83);
 sidePanel.setBorder(border);
 JButton cancelBtn = new JButton("Exit Game");
 cancelBtn.addActionListener(_->{
@@ -1203,6 +1213,76 @@ boardSquares[i][j] = piece;
 boardPanel.add(piece);
 }
 }
+}
+public void initializeH(JPanel hrp,JPanel vrp)
+{
+vrp.setLayout(new BoxLayout(vrp, BoxLayout.Y_AXIS)); 
+hrp.setLayout(new BoxLayout(hrp, BoxLayout.X_AXIS));
+Font font = new Font("monospaced",Font.BOLD,17);
+JLabel label1 = new JLabel("8");
+label1.setFont(font);
+JLabel label2 = new JLabel("7");
+label2.setFont(font);
+JLabel label3 = new JLabel("6");
+label3.setFont(font);
+JLabel label4 = new JLabel("5");
+label4.setFont(font);        
+JLabel label5 = new JLabel("4");
+label5.setFont(font);        
+JLabel label6 = new JLabel("3");
+label6.setFont(font);
+JLabel label7 = new JLabel("2");
+label7.setFont(font);
+JLabel label8 = new JLabel("1");
+label8.setFont(font);
+vrp.add(Box.createRigidArea(new Dimension(0, 40)));
+vrp.add(label1);
+vrp.add(Box.createRigidArea(new Dimension(0, 60)));
+vrp.add(label2);
+vrp.add(Box.createRigidArea(new Dimension(0, 60)));
+vrp.add(label3);
+vrp.add(Box.createRigidArea(new Dimension(0, 60)));
+vrp.add(label4);
+vrp.add(Box.createRigidArea(new Dimension(0, 60)));
+vrp.add(label5);
+vrp.add(Box.createRigidArea(new Dimension(0, 60)));
+vrp.add(label6);
+vrp.add(Box.createRigidArea(new Dimension(0, 50)));
+vrp.add(label7);
+vrp.add(Box.createRigidArea(new Dimension(0, 50)));
+vrp.add(label8);
+JLabel label11 = new JLabel("a");
+label11.setFont(font);
+JLabel label12 = new JLabel("b");
+label12.setFont(font);
+JLabel label13 = new JLabel("c");
+label13.setFont(font);
+JLabel label14 = new JLabel("d");
+label14.setFont(font);
+JLabel label15 = new JLabel("e");
+label15.setFont(font);
+JLabel label16 = new JLabel("f");
+label16.setFont(font);
+JLabel label17 = new JLabel("g");
+label17.setFont(font);
+JLabel label18 = new JLabel("h");
+label18.setFont(font);
+hrp.add(Box.createRigidArea(new Dimension(80,0)));
+hrp.add(label11);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label12);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label13);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label14);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label15);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label16);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label17);
+hrp.add(Box.createRigidArea(new Dimension(100,0)));
+hrp.add(label18);
 }
 private JPanel setupCapturedPanel()
 {
@@ -1604,6 +1684,7 @@ k2found=true;
 boolean kkp =false;
 if(k1found && k2found)
 {
+System.out.println("King found");
 kkp = kingsTooClose(b1,b2,w1,w2);
 if(kkp)
 {
