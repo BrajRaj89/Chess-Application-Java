@@ -2,7 +2,6 @@ package com.chess.board;
 
 public class ValidateMove
 {
-//king move validation 
 public static boolean validateKing(int x1,int y1,int x2,int y2)
 {
 int dx = Math.abs(x2-x1);
@@ -13,17 +12,6 @@ return true;
 }
 return false;
 }
-public static boolean validateKing(int x1,int y1,int x2,int y2,boolean kingHasMoved,boolean rookHasMoved,boolean pathClear,boolean isInCheck)
-{
-int dx = Math.abs(x2-x1);
-int dy = Math.abs(y2-y1);
-if(!kingHasMoved && !rookHasMoved && pathClear && !isInCheck && dx == 0 && dy == 2)
-{
-return true;
-}
-return false;
-}
-// pawn validation
 public static boolean validatePawn(int x1,int y1,int x2,int y2,boolean isWhite,boolean isCapturing)
 {
 int direction = isWhite ? -1:1;

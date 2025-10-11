@@ -4,6 +4,10 @@ public class ChessCheckDetector
 public static int l;
 public static int m;
 public static boolean hasCheck;
+public static void  printCheckI()
+{
+System.out.println("check from "+l+","+m);
+}
 public static boolean check(String board[][],String king,int x1,int y1)
 {
 String opponentsColor = (king.equals("bk.png"))?"w":"b";
@@ -213,7 +217,6 @@ for(int j=0; j<8; j++)
 {
 if(board[i][j]!=null && board[i][j].equals(king))
 {
-System.out.println("king position is "+i+","+j);
 x1 = i;
 y1 = j;
 flag = true;

@@ -322,7 +322,7 @@ client.execute("/ChessServer/removeMessage",username,"Stalemate");
 {
 //do nothing
 }
-messageLabel = new JLabel("Stalemate");
+messageLabel = new JLabel("Stalemate ");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 showHomeUI();
@@ -936,15 +936,16 @@ iconMap = new HashMap<>();
 setTitle("ChessBoard");
 boardPanel = new JPanel(new GridLayout(8, 8));
 Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+Border border = new LineBorder(new Color(0, 86, 109),1);
 hrPanel = new JPanel();
 vrPanel = new JPanel();
 hrPanel.setLayout(new BoxLayout(hrPanel,BoxLayout.X_AXIS));
 vrPanel.setLayout(new BoxLayout(vrPanel,BoxLayout.Y_AXIS));
-hrPanel.setBounds(0,d.height-103,d.width-456,16);
+hrPanel.setBounds(11,d.height-101,d.width-456,20);
 vrPanel.setBounds(0,2,11,d.height-63);
+hrPanel.setBorder(border);
 initializeH(hrPanel, vrPanel);
 setSize(d.width, d.height);
-Border border = new LineBorder(new Color(0, 86, 109),1);
 boardPanel.setBorder(border);
 boardPanel.setBounds(11, 2, d.width -456, d.height -103);
 sidePanel = new JPanel();
@@ -1515,7 +1516,6 @@ if(!hasCompleted)
 pressed1=null;
 return;
 }
-board[x1][y1]=null;
 chessBoard.disableBoard();
 chessBoard.statusField.setText("Board Disabled Submit Move");
 Move move = new Move();
@@ -1638,6 +1638,19 @@ String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
 boolean isCcheck = ChessCheckDetector.isInCheck(board,currentKing);
 if(isCcheck)
 {
+for(int i=0; i<8; i++)
+{
+for(int j=0; j<8; j++)
+{
+if(board[i][j]!=null && board[i][j].equals(currentKing))
+{
+x1 = i;
+y1 = j;
+break;
+}
+}
+}
+ChessCheckDetector.printCheckI();
 messageLabel = new JLabel("Invalid Move");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
@@ -1684,7 +1697,6 @@ k2found=true;
 boolean kkp =false;
 if(k1found && k2found)
 {
-System.out.println("King found");
 kkp = kingsTooClose(b1,b2,w1,w2);
 if(kkp)
 {
@@ -1716,7 +1728,8 @@ pressed1=null;
 return false;
 }else if(!isOCheck && !hasLegalMove)
 {
-messageLabel = new JLabel("Stalemate");
+String kString = (opponentKing.equals("bk.png")?"Black":"White");
+messageLabel = new JLabel("Stalemate\n The "+kString +" king has no valid move");
 messageLabel.setFont(messageFont);
 try
 {
@@ -1782,6 +1795,7 @@ int x2 = (int) toBtn.getClientProperty("row");
 int y2 = (int) toBtn.getClientProperty("col");
 String movingPiece = board[x1][y1];
 board[x2][y2] = movingPiece;
+board[x1][y1] =null;
 toBtn.setIcon(iconMap.get(movingPiece));
 fromBtn.setIcon(null);
 }
