@@ -224,8 +224,8 @@ client.execute("/ChessServer/removeMessage",username,"Rejected");
 {
 //do nothing
 }
-JLabel messagLabel = new JLabel("Your invitation is rejected by user "+message.fromUsername);
-messagLabel.setFont(new Font("Century",Font.PLAIN,14));
+JLabel messagLabel = new JLabel("Your Invitation is rejected by user "+message.fromUsername);
+messagLabel.setFont(new Font("Century",Font.PLAIN,15));
 messagLabel.setBackground(Color.white);
 messagLabel.setForeground(new Color(0,51,102)); 
 JOptionPane.showMessageDialog(null,messagLabel);
@@ -322,7 +322,7 @@ client.execute("/ChessServer/removeMessage",username,"Stalemate");
 {
 //do nothing
 }
-messageLabel = new JLabel("Stalemate ");
+messageLabel = new JLabel("Stalemate");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 showHomeUI();
@@ -508,7 +508,7 @@ if(authentic)
 this.username = usernameVal;
 showHomeUI();
 }else
-{
+{ 
 messageLabel  = new JLabel("Invalid username/password");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
@@ -523,7 +523,32 @@ System.exit(0);
 }
 });
 createAc.addActionListener(_->{
-messageLabel = new JLabel("This feature is unavailble");
+boolean registerd =false;
+String usernameVal = usernameField.getText().trim();
+String passwordVal = passwordField.getText().trim();
+if(usernameVal.length()==0 || passwordVal.length()==0)
+{
+messageLabel  = new JLabel("Empty username/password");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
+return;
+}
+try
+{
+registerd = (boolean)client.execute("/ChessServer/register",usernameVal,passwordVal);
+if(registerd)
+{
+messageLabel = new JLabel("Account created");
+hideUI();
+loginUI();
+}else
+{
+messageLabel = new JLabel("Some Problem");
+}
+}catch(Exception e)
+{
+messageLabel = new JLabel("Some Problem");
+}
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 });
@@ -1152,6 +1177,22 @@ statusField.setText("Black 's turn");
 }
 boardPanel.revalidate();
 boardPanel.repaint();
+boolean isCheck = true;
+boolean hasLegalMove  =false;
+if(!isCheck && !hasLegalMove)
+{
+messageLabel = new JLabel("Stalemate");
+messageLabel.setFont(messageFont);
+try
+{
+client.execute("/ChessServer/setMessage",username,username2,"Stalemate");
+}catch(Exception e)
+{
+//do nothing
+}
+JOptionPane.showMessageDialog(null,messageLabel);
+showHomeUI();
+}
 }catch(Exception e)
 {
 JOptionPane.showMessageDialog(null, e.getMessage());
@@ -1179,6 +1220,16 @@ piece.putClientProperty("col", j);
 piece.setBackground((i + j)%2==0?Color.WHITE:new Color(32,32,32));
 piece.setBorderPainted(false);
 piece.setFocusPainted(false);
+piece.addMouseListener(new MouseAdapter() {
+public void mouseEntered(MouseEvent me)
+{
+piece.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+}
+public void mouseExited(MouseEvent me)
+{
+piece.setCursor(Cursor.getDefaultCursor());
+}
+});
 if(board[i][j] != null)
 {
 piece.setIcon(iconMap.get(board[i][j]));
@@ -1203,6 +1254,17 @@ piece.putClientProperty("row", i);
 piece.putClientProperty("col", j);
 piece.setBackground((i + j)%2==0?Color.WHITE:new Color(32,32,32));
 piece.setBorderPainted(false);
+piece.setRolloverEnabled(true);
+piece.addMouseListener(new MouseAdapter() {
+public void mouseEntered(MouseEvent me)
+{
+piece.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+}
+public void mouseExited(MouseEvent me)
+{
+piece.setCursor(Cursor.getDefaultCursor());
+}
+});
 if (board[i][j] != null)
 {
 piece.setIcon(iconMap.get(board[i][j]));
@@ -1344,7 +1406,9 @@ if(pressed1 == null)
 if(board[x][y] == null) return;
 if((turn == 1 && !board[x][y].startsWith("w")) || (turn == 2 && !board[x][y].startsWith("b"))) 
 {
-JOptionPane.showMessageDialog(null,"Not your turn ");
+messageLabel = new JLabel("Not your turn");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 return;
 }
 pressed1 = pressed;
@@ -1510,6 +1574,54 @@ j+=step2;
 }
 }
 move(pressed1, pressed);
+Move move = new Move();
+String selected=null;
+String promotion=null;
+if(movingPiece.contains("p.png"))
+{
+String color = (movingPiece.equals("bp.png"))?"b":"w";
+if(color.equals("w"))
+{
+if(x2==0)
+{
+selected = showPromotionDialog();
+if(selected==null) promotion="wq.png";
+else if(selected.equals("Queen")) promotion="wq.png";
+else if(selected.equals("Bishop")) promotion="wb.png";
+else if(selected.equals("Rook")) promotion="wr.png";
+else if(selected.equals("Knight")) promotion="wkt.png";
+board[x2][y2] = promotion;
+System.out.println("index "+x2+","+y2+"string "+board[x2][y2]);
+isPromotion=true;
+promotionString = promotion;
+pressed.setIcon(iconMap.get(promotion));
+}
+}else
+{
+if(x2==7)
+{
+selected = showPromotionDialog();
+if(selected==null) promotion="bq.png";
+else if(selected.equals("Queen")) promotion="bq.png";
+else if(selected.equals("Bishop")) promotion="bb.png";
+else if(selected.equals("Rook")) promotion="br.png";
+else if(selected.equals("Knight")) promotion="bkt.png";
+board[x2][y2] = promotion;
+isPromotion=true;
+promotionString = promotion;
+pressed.setIcon(iconMap.get(promotion));
+}
+}
+}
+if(isPromotion)
+{
+move.promotion = true;
+move.promotionString = promotionString;
+isPromotion=false;
+}else
+{
+move.promotion=false;
+}
 boolean hasCompleted = evaluateMove(pressed1, pressed,movingPiece,capturedPiece,x2,y2);
 if(!hasCompleted)
 {
@@ -1518,7 +1630,6 @@ return;
 }
 chessBoard.disableBoard();
 chessBoard.statusField.setText("Board Disabled Submit Move");
-Move move = new Move();
 move.fromX = x1;
 move.fromY = y1;
 move.toX = x2;
@@ -1535,56 +1646,9 @@ move.capturedByWhite = capturedByWhite;
 {
 move.captured = false;
 }
-String selected=null;
-String promotion=null;
-if(movingPiece.contains("p.png"))
-{
-String color = (movingPiece.equals("bp.png"))?"b":"w";
-if(color.equals("w"))
-{
-if(x==0)
-{
-selected = showPromotionDialog();
-if(selected==null) promotion="wq.png";
-else if(selected.equals("Queen")) promotion="wq.png";
-else if(selected.equals("Bishop")) promotion="wb.png";
-else if(selected.equals("Rook")) promotion="wr.png";
-else if(selected.equals("Knight")) promotion="wkt.png";
-board[x][y] = promotion;
-isPromotion=true;
-promotionString = promotion;
-pressed.setIcon(iconMap.get(promotion));
-}
-}else
-{
-if(x==7)
-{
-selected = showPromotionDialog();
-if(selected==null) promotion="bq.png";
-else if(selected.equals("Queen")) promotion="bq.png";
-else if(selected.equals("Bishop")) promotion="bb.png";
-else if(selected.equals("Rook")) promotion="br.png";
-else if(selected.equals("Knight")) promotion="bkt.png";
-board[x][y] = promotion;
-isPromotion=true;
-promotionString = promotion;
-pressed.setIcon(iconMap.get(promotion));
-}
-}
-}
-if(isPromotion)
-{
-move.promotion = true;
-move.promotionString = promotionString;
-isPromotion=false;
-}else
-{
-move.promotion=false;
-}
 this.currentMove = move;
 pressed1 = null;
 }
-
 }catch(Exception e)
 {
 e.printStackTrace();
@@ -1638,19 +1702,6 @@ String currentKing = opponentKing.equals("wk.png")? "bk.png":"wk.png";
 boolean isCcheck = ChessCheckDetector.isInCheck(board,currentKing);
 if(isCcheck)
 {
-for(int i=0; i<8; i++)
-{
-for(int j=0; j<8; j++)
-{
-if(board[i][j]!=null && board[i][j].equals(currentKing))
-{
-x1 = i;
-y1 = j;
-break;
-}
-}
-}
-ChessCheckDetector.printCheckI();
 messageLabel = new JLabel("Invalid Move");
 messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
@@ -1716,6 +1767,9 @@ boolean isOCheck = ChessCheckDetector.isInCheck(board,opponentKing);
 boolean hasLegalMove = ChessCheckDetector.hasAnyLegalMove(board,opponentKing);
 if(isOCheck && !hasLegalMove)
 {
+messageLabel = new JLabel("Checkmate");
+messageLabel.setFont(messageFont);
+JOptionPane.showMessageDialog(null,messageLabel);
 showResultUI(username,username2,"Won");
 try
 {
@@ -1726,22 +1780,7 @@ client.execute("/ChessServer/setMessage",username,username2,"LostMatch");
 }
 pressed1=null;
 return false;
-}else if(!isOCheck && !hasLegalMove)
-{
-String kString = (opponentKing.equals("bk.png")?"Black":"White");
-messageLabel = new JLabel("Stalemate\n The "+kString +" king has no valid move");
-messageLabel.setFont(messageFont);
-try
-{
-client.execute("/ChessServer/setMessage",username,username2,"Stalemate");
-}catch(Exception e)
-{
-//do nothing
-}
-JOptionPane.showMessageDialog(null,messageLabel);
-showHomeUI();
-}
-else if(isOCheck)
+}else if(isOCheck)
 {
 for(int i=0; i<=7;i++)
 {

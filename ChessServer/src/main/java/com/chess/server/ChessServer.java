@@ -18,8 +18,10 @@ static private Set<String>  playingMembers;
 static private Map<String,List<Message>>inboxes;
 static private Map<String,Game> games;
 static private Map<String,Move> moves;
+static private MemberDAO memberDAO;
 static
 {
+memberDAO = new MemberDAO();
 populateDataStructures();
 }
 public ChessServer()
@@ -27,7 +29,6 @@ public ChessServer()
 }
 static private void populateDataStructures()
 {
-MemberDAO memberDAO = new MemberDAO();
 List<MemberDTO> dlMembers = memberDAO.getAll();
 Member member;
 members = new HashMap<>();
@@ -47,7 +48,10 @@ games  = new HashMap<>();
 public boolean isMemberAuthentic(String username,String password)
 {
 Member member = members.get(username);
-if(member==null) return false;
+if(member==null)
+{
+return false;
+}
 boolean b = password.equals(member.password);
 if(b)
 {
@@ -79,11 +83,20 @@ System.out.println(e.getMessage()+"getAvailable method");
 return null;
 }
 @Path("/register")
-public void addUser(String username,String password)
+public boolean addUser(String username,String password)
 {
-MemberDTO member = new MemberDTO();
-member.username = username;
-member.password = password;
+try
+{
+MemberDTO memberDTO = new MemberDTO();
+memberDTO.username = username;
+memberDTO.password = password;
+memberDAO.addMember(memberDTO);
+populateDataStructures();
+return true;
+}catch(Exception exception)
+{
+return false;
+}
 }
 @Path("/inviteUser")
 public void inviteUser(String fromUsername,String toUsername)

@@ -553,11 +553,10 @@ break;
 }
 if(!flag)
 {
-return false;
+return true;
 }
 boolean hasValidMove = false;
 int  kingvalidMove[][] = {{1,1},{-1,-1},{-1,1},{1,-1},{-1,0},{1,0},{0,1},{0,-1}};
-
 if(hasCheck)
 {
 for(int emptySquare[]:kingvalidMove)
@@ -623,6 +622,8 @@ if(!hasValidMove)
 return true;
 }
 }
+// check another piece that they can move without leaving there king in check
+
 }
 return false;
 }
