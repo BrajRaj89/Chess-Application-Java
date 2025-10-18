@@ -279,12 +279,19 @@ return false;
 @Path("/getMove")
 public Move getOpponentsMove(String username)
 {
-Move move = moves.get(username);
+Move move =null;
+try
+{
+move = moves.get(username);
 if(move==null)
 {
 return null;
 }
 moves.remove(username);
+}catch(Exception e)
+{
+e.printStackTrace();
+}
 return move;
 }
 @Path("/shareBoard")

@@ -41,6 +41,7 @@ private boolean capturedByWhite;
 private Object boardObject;
 private String board[][];
 java.lang.reflect.Type listType;
+private String currentKing;
 public ChessUI()
 {
 this.client = new NFrameworkClient();
@@ -312,6 +313,13 @@ messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 }else if(message.type==MESSAGE_TYPE.LOST_MATCH)
 {
+try
+{
+client.execute("/ChessServer/removeMessage",username,"LostMatch");
+}catch(Exception e)
+{
+// do nothing
+}
 showResultUI(message.fromUsername,username,"Loss");
 }else if(message.type==MESSAGE_TYPE.STALEMATE)
 {
@@ -1177,9 +1185,8 @@ statusField.setText("Black 's turn");
 }
 boardPanel.revalidate();
 boardPanel.repaint();
-boolean isCheck = true;
-boolean hasLegalMove  =false;
-if(!isCheck && !hasLegalMove)
+boolean stalemate = ChessCheckDetector.isStalemate(board,currentKing);
+if(stalemate)
 {
 messageLabel = new JLabel("Stalemate");
 messageLabel.setFont(messageFont);
@@ -1241,6 +1248,7 @@ boardSquares[i][j] = piece;
 boardPanel.add(piece);
 }
 }
+currentKing = "wk.png";
 }
 private void initializeBoard2(JPanel boardPanel)
 {
@@ -1276,6 +1284,7 @@ boardSquares[i][j] = piece;
 boardPanel.add(piece);
 }
 }
+currentKing = "bk.png";
 }
 public void initializeH(JPanel hrp,JPanel vrp)
 {
