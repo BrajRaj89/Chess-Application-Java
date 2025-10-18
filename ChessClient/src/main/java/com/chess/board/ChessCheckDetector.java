@@ -609,6 +609,8 @@ return true;
 }
 return false;
 }
+else
+{
 hasValidMove = false;
 for(int emptySquare[]:kingvalidMove)
 {
@@ -622,8 +624,8 @@ if(!hasValidMove)
 return true;
 }
 }
+}
 // check another piece that they can move without leaving there king in check
-
 }
 return false;
 }
