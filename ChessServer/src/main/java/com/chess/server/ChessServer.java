@@ -3,9 +3,6 @@ import com.chess.server.dl.*;
 import com.chess.common.*;
 import com.nframework.server.annotations.*;
 import java.util.*;
-
-import javax.swing.JButton;
-
 import com.google.gson.*;
 import com.chess.server.board.*;
 
