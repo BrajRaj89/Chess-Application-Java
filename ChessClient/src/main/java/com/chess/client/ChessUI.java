@@ -105,6 +105,8 @@ availableLabel.setFont(headFont);
 panel1.add(availableLabel,BorderLayout.NORTH);
 availableUsersListModel = new AvailableUsersListModel();
 this.availableUsersList = new JTable(availableUsersListModel);
+this.availableUsersList.getTableHeader().setResizingAllowed(false);
+this.availableUsersList.getTableHeader().setReorderingAllowed(false);
 this.availableUsersList.getColumn(" ").setCellRenderer(new AvailableUsersListButtonRenderer());
 this.availableUsersList.getColumn(" ").setCellEditor(new AvailableUsersListButtonCellEditor());
 this.availableUsersListScrollPane = new JScrollPane(this.availableUsersList,ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -115,6 +117,8 @@ invitationLabel.setFont(headFont);
 panel2.add(invitationLabel,BorderLayout.NORTH);
 invitationTableModel = new InvitationTableModel();
 invitationMessagesList = new JTable(invitationTableModel);
+invitationMessagesList.getTableHeader().setResizingAllowed(false);
+invitationMessagesList.getTableHeader().setReorderingAllowed(false);
 invitationMessagesList.setRowHeight(20);
 invitationMessagesList.getColumn("✔").setPreferredWidth(90);
 invitationMessagesList.getColumn("✖").setPreferredWidth(90);
@@ -335,8 +339,8 @@ messageLabel.setFont(messageFont);
 JOptionPane.showMessageDialog(null,messageLabel);
 showHomeUI();
 }
-}//for loop ends 
-}// if ends
+} 
+}
 }catch(Exception t)
 {
 System.out.println("Exception occured "+t.getMessage());
@@ -360,12 +364,11 @@ JOptionPane.showMessageDialog(ChessUI.this,t.toString());
 }
 } 
 });
-
-// now all is setup,let us starts the timer
 timer.start();
 }
 public void showHomeUI()
 {
+isSecond= false;
 setTitle(this.username);
 hideUI();
 container.setLayout(new BorderLayout());
@@ -677,8 +680,7 @@ container.add(chessBoard.vrPanel);
 container.add(chessBoard.sidePanel);
 container.revalidate();
 container.repaint();
-}
-//inner classes starts here 
+} 
 class AvailableUsersListModel extends AbstractTableModel
 {
 private java.util.List<String> members;
@@ -780,6 +782,7 @@ fireEditingStopped();
 }
 public Component getTableCellEditorComponent(JTable table,Object value,boolean a,int row,int column)
 {
+System.out.println("get Table cell editor ");
 this.row = row;
 this.col = column;
 JButton button = (JButton)availableUsersListModel.getValueAt(this.row,this.col);
@@ -800,11 +803,9 @@ return super.stopCellEditing();
 }
 public void fireEditingStopped()
 {
-//do whatever is required
 super.fireEditingStopped();
 }
 }
-// inner class
 class InvitationTableModel extends AbstractTableModel
 {
 private java.util.List<Message> messages = new ArrayList<>();
@@ -843,10 +844,6 @@ public Message getMessageAt(int row)
 {
 return messages.get(row);
 }
-public void setValueAt(Object value,int row,int col)
-{
-// This method is not used in current button workflow
-}
 public void addMessage(Message msg)
 {
 if(!messages.contains(msg))
@@ -879,8 +876,7 @@ javax.swing.Timer t = expiryTimer.remove(msg);
 if(t!=null) t.stop();
 fireTableRowsDeleted(index,index);
 }
-}// inner class ends 
-
+}
 class DualButtonRenderer implements TableCellRenderer 
 {
 public Component getTableCellRendererComponent(JTable table,Object value,boolean a,boolean b,int r,int c)
@@ -902,7 +898,7 @@ for(ActionListener al:button.getActionListeners())
 {
 button.removeActionListener(al);
 }
-// now adding action listener
+
 button.addActionListener(_->{
 InvitationTableModel model = (InvitationTableModel)table.getModel();
 String toUsername = (String)model.getValueAt(row,0);
@@ -927,8 +923,7 @@ public void fireEditingStopped()
 {
 super.fireEditingStopped();
 }
-}// inner class ends 
-
+}
 
 public class ChessBoard implements ActionListener
 {
@@ -1882,4 +1877,4 @@ whiteCaptured.removeAll();
 blackCaptured.removeAll();
 }    
 }
-}// outer class ends                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 

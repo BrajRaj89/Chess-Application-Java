@@ -12,13 +12,9 @@ this.y =y;
 }
 public class ChessCheckDetector
 {
-public static int l;
-public static int m;
+public static int p;
+public static int q;
 public static boolean hasCheck;
-public static void  printCheckI()
-{
-System.out.println("check from "+l+","+m);
-}
 public static boolean check(String board[][],String king,int x1,int y1)
 {
 String opponentsColor = (king.equals("bk.png"))?"w":"b";
@@ -27,11 +23,9 @@ String oQueen =(opponentsColor.equals("w"))?"wq.png":"bq.png";
 String oBishop = (opponentsColor.equals("w"))?"wb.png":"bb.png";
 String oRook = (opponentsColor.equals("w"))?"wr.png":"br.png";
 String oKnight = (opponentsColor.equals("w"))?"wkt.png":"bkt.png";
-
 int x =x1; 
 int y =y1;
 x++;
-
 while(x<=7)
 {
 if(board[x][y]!=null)
@@ -81,7 +75,6 @@ else break;
 }
 y--;
 }
-
 x = x1;
 y = y1;
 x--;
@@ -89,7 +82,7 @@ y++;
 while(y<=7 && x>=0)
 {
 if(board[x][y]!=null)
- {
+{
 int dx = Math.abs(x-x1); 
 int dy = Math.abs(y-y1);
 if(dx==1 && dy==1 && board[x][y].equals(oPawn))
@@ -102,7 +95,6 @@ return true;
 return true;
 }
 }
-
 if(board[x][y].equals(oQueen)) return true;
 if(board[x][y].equals(oBishop)) return true;
 else break;
@@ -110,7 +102,6 @@ else break;
 x--;
 y++;
 }
-
 x = x1;
 y = y1;
 x++;
@@ -131,7 +122,6 @@ return true;
 return true;
 }
 }
-
 if(board[x][y].equals(oQueen)) return true;
 if(board[x][y].equals(oBishop)) return true;
 else break;
@@ -139,7 +129,6 @@ else break;
 x++;
 y--;
 }
-
 x = x1;
 y = y1;
 x--;
@@ -160,7 +149,6 @@ return true;
 return true;
 }
 }
-
 if(board[x][y].equals(oQueen)) return true;
 if(board[x][y].equals(oBishop)) return true;
 else break;
@@ -209,7 +197,6 @@ if(board[i][j]!=null && board[i][j].equals(oKnight)) return true;
 }
 return false;
 }
-
 public static boolean isInCheck(String board[][],String king)
 {
 String opponentsColor = (king.equals("bk.png"))?"w":"b";
@@ -249,15 +236,15 @@ if(board[x][y]!=null)
 {
 if(board[x][y].equals(oRook))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 else if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -274,15 +261,15 @@ if(board[x][y]!=null)
 {
 if(board[x][y].equals(oRook))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 else if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -299,15 +286,15 @@ if(board[x][y]!=null)
 {
 if(board[x][y].equals(oRook))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 else if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -324,15 +311,15 @@ if(board[x][y]!=null)
 {
 if(board[x][y].equals(oRook))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 else if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -354,29 +341,29 @@ if(dx==1 && dy==1 && board[x][y].equals(oPawn))
 {
 if(oPawn.contains("w") && x1<x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }else if(oPawn.contains("b") && x1>x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 }
 if(board[x][y].equals(oQueen))
 { 
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 if(board[x][y].equals(oBishop))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -400,29 +387,29 @@ if(dx==1 && dy==1 && board[x][y].equals(oPawn))
 {
 if(oPawn.contains("w") && x1<x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }else if(oPawn.contains("b") && x1>x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 }
 if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 if(board[x][y].equals(oBishop))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -446,29 +433,29 @@ if(dx==1 && dy==1 && board[x][y].equals(oPawn))
 {
 if(oPawn.contains("w") && x1<x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }else if(oPawn.contains("b") && x1>x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 }
 if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 if(board[x][y].equals(oBishop))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -491,29 +478,29 @@ if(dx==1 && dy==1 && board[x][y].equals(oPawn))
 {
 if(oPawn.contains("w") && x1<x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }else if(oPawn.contains("b") && x1>x)
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 }
 if(board[x][y].equals(oQueen))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
 if(board[x][y].equals(oBishop))
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -533,8 +520,8 @@ if(i<=7 && j<=7 && j>=0 && i>=0)
 {
 if(board[i][j]!=null && board[i][j].equals(oKnight)) 
 {
-l=x;
-m=y;
+p=x;
+q=y;
 hasCheck=true;
 return true;
 }
@@ -602,13 +589,13 @@ if(board[i][j]!=null && board[i][j].startsWith(myColor))
 String piece = board[i][j];
 if(piece.equals("wp.png"))
 {
-canCapture = ValidateMove.validatePawn(i,j,l,m,true,true);
+canCapture = ValidateMove.validatePawn(i,j,p,q,true,true);
 }else if(piece.equals("bp.png"))
 {
-canCapture = ValidateMove.validatePawn(i,j,l,m,false,false);
+canCapture = ValidateMove.validatePawn(i,j,p,q,false,false);
 }else
 {
-canCapture = ValidateMove.validate(piece,i,j,l,m);
+canCapture = ValidateMove.validate(piece,i,j,p,q);
 }
 if(canCapture)
 {
@@ -634,16 +621,13 @@ for(int j=0; j<8; j++)
 {
 if(board[i][j]!=null && board[i][j].startsWith(myPieces))
 {
-System.out.println("piece at "+i+","+j+" is "+board[i][j]);
 java.util.List<Move> moves = generatePossibleMoves(board,i,j);
 if(moves==null)
 {
-System.out.println("No valid move");
 return true;
 }
 for(Move move:moves)
 {
-System.out.println(board[i][j]+" "+move.x+","+move.y);
 if(isLegalMove(board,move,king,i,j))
 {
 return false;
@@ -659,22 +643,21 @@ public static java.util.List<Move> generatePossibleMoves(String board[][],int i,
 java.util.List<Move> list = new java.util.ArrayList<>();
 Move move =null;
 String piece = board[i][j];
+String ss = piece.substring(0,1);
 if(piece.equals("bp.png"))
 {
-int l,m;
-l=m=0;
-l = i;
-m = j;
-m++;
-while(m<=7)
+int l= i;
+int m = j;
+l++;
+while(l<=7)
 {
-if(board[l][m]!=null)
+if(board[l][m]==null)
 {
 move = new Move(l,m);
 list.add(move);
 break;
 }
-m++;
+l++;
 }
 l = i;
 m = j; 
@@ -702,19 +685,18 @@ list.add(move);
 }
 }else if(piece.equals("wp.png"))
 {
-int l,m;
-l=m=0;
-l = i;
-m = j;
-m++;
-while(m<=7)
+int l = i;
+int m = j;
+l--;
+while(l>=0)
 {
-if(board[l][m]!=null)
+if(board[l][m]==null)
 {
 move = new Move(l,m);
 list.add(move);
+break;
 }
-m++;
+l--;
 }
 l = i;
 m = j; 
@@ -742,22 +724,24 @@ list.add(move);
 }
 }else if(piece.substring(1).equals("b.png"))
 {
-l = i;
-m = j;
+int l = i;
+int m = j;
 l++;
 m++;
-while (l<=7 && m<=7)
+while(l<=7 && m<=7)
 {
 if(board[l][m]==null)
 {
-move = new Move(i, j);
+move = new Move(l, m);
 list.add(move);
 break;
-}
-if(board[l][m]!=null && !board[l][m].startsWith(piece))
+}else if(!board[l][m].startsWith(ss))
 {
-move = new Move(i, j);
+move = new Move(l,m);
 list.add(move);
+break;
+}else if(board[l][m].startsWith(ss))
+{
 break;
 }
 l++;
@@ -771,14 +755,16 @@ while(l>=0 && m>=0)
 {
 if(board[l][m]==null)
 {
-move = new Move(i, j);
+move = new Move(l,m);
 list.add(move);
 break;
-}
-if(board[l][m]!=null && !board[l][m].startsWith(piece))
+}else if(!board[l][m].startsWith(ss))
 {
-move = new Move(i, j);
+move = new Move(l, m);
 list.add(move);
+break;
+}else if(board[l][m].startsWith(ss))
+{
 break;
 }
 l--;
@@ -788,18 +774,20 @@ l = i;
 m = j; 
 l++;
 m--;
-while(l<=7)
+while(l<=7 && m>=0)
 {
 if(board[l][m]==null)
 {
-move = new Move(i, j);
+move = new Move(l, m);
 list.add(move);
 break;
-}
-if(board[l][m]!=null && !board[l][m].startsWith(piece))
+}else if(!board[l][m].startsWith(ss))
 {
-move = new Move(i, j);
+move = new Move(l, m);
 list.add(move);
+break;
+}else if(board[l][m].startsWith(ss))
+{
 break;
 }
 l++;
@@ -809,18 +797,21 @@ l = i;
 m = j; 
 l--;
 m++;
-while(l>=0) 
-{
+while(l>=0 && m<=7) 
+{ 
 if(board[l][m]==null)
 {
-move = new Move(i, j);
+move = new Move(l, m);
 list.add(move);
 break;
 }
-if(board[l][m]!=null && !board[l][m].startsWith(piece))
+else if(!board[l][m].startsWith(ss))
 {
-move = new Move(i, j);
+move = new Move(l, m);
 list.add(move);
+break;
+}else if(board[l][m].startsWith(ss))
+{
 break;
 }
 l--;
@@ -828,90 +819,97 @@ m++;
 }
 }else if(piece.substring(1).equals("k.png")) 
 {
-    int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
-    int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
-    
-    for(int d=0; d<8; d++){
-        int l = i + dx[d], m = j + dy[d];
-        if(l>=0 && l<=7 && m>=0 && m<=7){
-            if(board[l][m]==null || !board[l][m].startsWith(piece.substring(0,1))){
-                move = new Move(i, j);
-                list.add(move);
-            }
-        }
-    }
+int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
+int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
+for(int d=0; d<8; d++)
+{
+int l = i + dx[d], m = j + dy[d];
+if(l>=0 && l<=7 && m>=0 && m<=7)
+{
+if(board[l][m]==null || !board[l][m].startsWith(piece.substring(0,1))){
+move = new Move(l,m);
+list.add(move);
 }
-else if(piece.substring(1).equals("r.png")) // Rook
+}
+}
+}
+else if(piece.substring(1).equals("r.png")) 
 {
-    // Up
-    for(int l=i-1; l>=0; l--){
-        if(board[l][j]!=null){
-            if(!board[l][j].startsWith(piece.substring(0,1)))
-                list.add(new Move(i, j));
-            break;
-        }
-        list.add(new Move(i, j));
-    }
-    // Down
-    for(int l=i+1; l<=7; l++){
-        if(board[l][j]!=null){
-            if(!board[l][j].startsWith(piece.substring(0,1)))
-                list.add(new Move(i, j));
-            break;
-        }
-        list.add(new Move(i, j));
-    }
-    // Left
-    for(int m=j-1; m>=0; m--){
-        if(board[i][m]!=null){
-            if(!board[i][m].startsWith(piece.substring(0,1)))
-                list.add(new Move(i, j));
-            break;
-        }
-        list.add(new Move(i, j));
-    }
-    // Right
-    for(int m=j+1; m<=7; m++){
-        if(board[i][m]!=null){
-            if(!board[i][m].startsWith(piece.substring(0,1)))
-                list.add(new Move(i, j));
-            break;
-        }
-        list.add(new Move(i, j));
-    }
-}else if(piece.substring(1).equals("q.png")) // Queen
+for(int l=i-1; l>=0; l--)
 {
-    int[] dx = {-1, 1, 0, 0, -1, -1, 1, 1};
-    int[] dy = {0, 0, -1, 1, -1, 1, -1, 1};
-    
-    for(int d=0; d<8; d++){
-        int l = i + dx[d];
-        int m = j + dy[d];
-        while(l>=0 && l<=7 && m>=0 && m<=7){
-            if(board[l][m]!=null){
-                if(!board[l][m].startsWith(piece.substring(0,1)))
-                    list.add(new Move(i, j));
-                break;
-            }
-            list.add(new Move(i, j));
-            l += dx[d];
-            m += dy[d];
-        }
-    }
-} else if(piece.substring(1).contains("kt.png")) // Knight
+if(board[l][j]!=null)
 {
-    int[] dx = {-2,-2,-1,-1,1,1,2,2};
-    int[] dy = {-1,1,-2,2,-2,2,-1,1};
-    
-    for(int d=0; d<8; d++){
-        int l = i + dx[d], m = j + dy[d];
-        if(l>=0 && l<=7 && m>=0 && m<=7){
-            if(board[l][m]==null || !board[l][m].startsWith(piece.substring(0,1))){
-                move = new Move(i, j);
-                list.add(move);
-            }
-        }
-    }
+if(!board[l][j].startsWith(piece.substring(0,1)))
+list.add(new Move(l,j));
+break;
+}
+list.add(new Move(l, j));
+}
+for(int l=i+1; l<=7; l++)
+{
+if(board[l][j]!=null)
+{
+if(!board[l][j].startsWith(piece.substring(0,1)))
+list.add(new Move(l, j));
+break;
+}
+list.add(new Move(l, j));
+}
+for(int m=j-1; m>=0; m--)
+{
+if(board[i][m]!=null)
+{
+if(!board[i][m].startsWith(piece.substring(0,1)))
+list.add(new Move(i, m));
+break;
+}
+list.add(new Move(i, m));
+}
+for(int m=j+1; m<=7; m++)
+{
+if(board[i][m]!=null)
+{if(!board[i][m].startsWith(piece.substring(0,1)))
+list.add(new Move(i, m));
+break;
+}
+list.add(new Move(i, m));
+}
+}else if(piece.substring(1).equals("q.png"))
+{
+int[] dx = {-1, 1, 0, 0, -1, -1, 1, 1};
+int[] dy = {0, 0, -1, 1, -1, 1, -1, 1};
+for(int d=0; d<8; d++)
+{
+int l = i + dx[d];
+int m = j + dy[d];
+while(l>=0 && l<=7 && m>=0 && m<=7)
+{
+if(board[l][m]!=null)
+{
+if(!board[l][m].startsWith(piece.substring(0,1)))
+list.add(new Move(l,m));
+break;
+}
+l += dx[d];
+m += dy[d];
+}
+}
+}else if(piece.substring(1).equals("kt.png"))
+{
+int[] dx = {-2,-2,-1,-1,1,1,2,2};
+int[] dy = {-1,1,-2,2,-2,2,-1,1};
+for(int d=0; d<8; d++)
+{
+int l = i + dx[d], m = j + dy[d];
+if(l>=0 && l<=7 && m>=0 && m<=7)
+{
+if(board[l][m]==null || !board[l][m].startsWith(piece.substring(0,1)))
+{
+move = new Move(l, m);
+list.add(move);
+}
+}
+}
 }
 return list;
 }
@@ -928,6 +926,6 @@ boardc[i][j] = board[i][j];
 String movingPiece = boardc[l][m];
 boardc[move.x][move.y] = movingPiece;
 boardc[l][m] = null;
-return isInCheck(boardc,king);
+return  !isInCheck(boardc,king);
 }
 }

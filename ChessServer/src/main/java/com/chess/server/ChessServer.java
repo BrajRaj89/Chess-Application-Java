@@ -220,7 +220,6 @@ flag = ValidateMove.validatePawn(move.fromX,move.fromY,move.toX,move.toY,isWhite
 {
 flag = ValidateMove.validate(piece,move.fromX,move.fromY,move.toX,move.toY);
 }
-flag = true;
 if(flag)
 {
 String pieceString = board[move.fromX][move.fromY];
