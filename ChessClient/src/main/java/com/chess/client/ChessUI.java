@@ -6,7 +6,6 @@ import com.google.gson.*;
 import com.google.gson.reflect.*; 
 import javax.swing.*;
 import javax.swing.Timer;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -219,7 +218,6 @@ client.execute("/ChessServer/removeMessage",username,"Accepted");
 //do nothing
 }
 startUI(message.fromUsername);
-availableUsersListModel.refreshUsersList();
 }else if(message.type==MESSAGE_TYPE.CHALLENGE_REJECTED)
 {
 try 
@@ -356,7 +354,7 @@ try
 {
 @SuppressWarnings("unchecked")
 java.util.List<String> members =(java.util.List<String>)client.execute("/ChessServer/getMembers",username);
-ChessUI.this.availableUsersListModel.setUsers(members);
+ChessUI.this.availableUsersListModel.setMembers(members);
 timer.start();
 }catch(Throwable t)
 {
@@ -720,7 +718,7 @@ public Class<?> getColumnClass(int c)
 if(c==0) return String.class;
 return JButton.class;
 }
-public void setUsers(java.util.List<String> members)
+public void setMembers(java.util.List<String> members)
 {
 if(awaitingInvitationReply) return;
 this.members = members;
@@ -740,11 +738,11 @@ if(text.equalsIgnoreCase("Invited"))
 {
 awaitingInvitationReply = true;
 for(JButton inviteButton:inviteButtons) inviteButton.setEnabled(false);
-ChessUI.this.sendInvitation(this.members.get(row));
 this.fireTableDataChanged();
 }
 else if(text.equalsIgnoreCase("Invite"))
 {
+System.out.println("if condition executed with invite ");
 awaitingInvitationReply = false;
 for(JButton inviteButton:inviteButtons) inviteButton.setEnabled(true);
 this.fireTableDataChanged();
@@ -754,6 +752,7 @@ this.fireTableDataChanged();
 public void refreshUsersList()
 {
 this.members.clear();
+this.inviteButtons.clear();
 this.fireTableDataChanged();
 this.awaitingInvitationReply= false;
 }
@@ -776,13 +775,13 @@ this.actionListener = new ActionListener()
 {
 public void actionPerformed(ActionEvent ae)
 {
+ChessUI.this.sendInvitation(availableUsersListModel.members.get(row));
 fireEditingStopped();
 }
 }; 
 }
 public Component getTableCellEditorComponent(JTable table,Object value,boolean a,int row,int column)
 {
-System.out.println("get Table cell editor ");
 this.row = row;
 this.col = column;
 JButton button = (JButton)availableUsersListModel.getValueAt(this.row,this.col);
@@ -854,7 +853,7 @@ JButton btn2 = new JButton("Decline");
 acceptButtons.add(btn1);
 declineButtons.add(btn2);
 fireTableRowsInserted(messages.size() - 1, messages.size() - 1);
-t2 = new javax.swing.Timer(50000,new ActionListener(){
+t2 = new javax.swing.Timer(10000,new ActionListener(){
 public void actionPerformed(ActionEvent ae)
 {
 removeMessage(msg);
@@ -898,7 +897,6 @@ for(ActionListener al:button.getActionListeners())
 {
 button.removeActionListener(al);
 }
-
 button.addActionListener(_->{
 InvitationTableModel model = (InvitationTableModel)table.getModel();
 String toUsername = (String)model.getValueAt(row,0);
@@ -924,7 +922,6 @@ public void fireEditingStopped()
 super.fireEditingStopped();
 }
 }
-
 public class ChessBoard implements ActionListener
 {
 private JButton[][] boardSquares = new JButton[8][8];

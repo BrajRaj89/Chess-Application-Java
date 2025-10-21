@@ -41,6 +41,21 @@ playingMembers = new HashSet<>();
 inboxes = new HashMap<>();
 games  = new HashMap<>();
 }
+public void  repopulate()
+{
+List<MemberDTO> dlMembers = memberDAO.getAll();
+Member member;
+members = new HashMap<>();
+for(MemberDTO memberDTO:dlMembers)
+{
+member = new Member();
+member.username = memberDTO.username;
+member.password = memberDTO.password;
+System.out.println(member.username);
+System.out.println(member.password);
+members.put(member.username,member);
+}
+}
 @Path("/authenticateMember")
 public boolean isMemberAuthentic(String username,String password)
 {
@@ -60,7 +75,8 @@ return b;
 public void logout(String username)
 {
 loggedInMembers.remove(username);
-//playingMembers.remove(username); //will deal with this scenario later on
+inboxes.remove(username);
+// playingMembers.remove(username);
 }
 @Path("/getMembers")
 public List<String> getAvailableMembers(String username)
@@ -88,7 +104,7 @@ MemberDTO memberDTO = new MemberDTO();
 memberDTO.username = username;
 memberDTO.password = password;
 memberDAO.addMember(memberDTO);
-populateDataStructures();
+repopulate();
 return true;
 }catch(Exception exception)
 {
