@@ -21,9 +21,6 @@ static
 memberDAO = new MemberDAO();
 populateDataStructures();
 }
-public ChessServer()
-{
-}
 static private void populateDataStructures()
 {
 List<MemberDTO> dlMembers = memberDAO.getAll();
@@ -51,8 +48,6 @@ for(MemberDTO memberDTO:dlMembers)
 member = new Member();
 member.username = memberDTO.username;
 member.password = memberDTO.password;
-System.out.println(member.username);
-System.out.println(member.password);
 members.put(member.username,member);
 }
 }
@@ -178,7 +173,7 @@ break;
 }
 }catch(Exception e)
 {
-System.out.println(e.getMessage()+"remove method");
+//some problem 
 }
 }
 @Path("/setMessage")
@@ -209,7 +204,7 @@ inboxes.put(msg.toUsername,messages);
 messages.add(msg);
 }catch(Exception e)
 {
-System.out.println(e.getMessage()+"set message");
+// some problem
 }
 }
 @Path("/submitMove")
@@ -279,13 +274,10 @@ board[move.fromX][move.fromY] = null;
 moves.put(move.toUser, move);
 return true;
 }
-System.out.println("x1-"+move.fromX+"y1-"+move.fromY+"x2-"+move.toX+"y2-"+move.toY);
-System.out.println("moving piece "+board[move.fromX][move.fromY]+"captured piece "+board[move.toX][move.toY]);
 }catch(Exception e)
 {
-System.out.println(e.getMessage());
+//some problem
 }
-System.out.println("moving piece "+board[move.fromX][move.fromY]+"capture piece "+board[move.toX][move.toY]);
 return false;
 }
 @Path("/getMove")
